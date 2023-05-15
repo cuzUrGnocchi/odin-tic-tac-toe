@@ -1,0 +1,44 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --newspaper: rgb(220, 220, 220);
+}
+
+.page-container {
+    background-color: var(--newspaper);
+    min-height: 100vh;
+}
+
+.main-content {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.board-container {
+    background-color: black;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    justify-items: stretch;
+    align-items: stretch;
+    gap: 3px;
+    background-color: transparent;
+}
+
+.tile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--newspaper);
+}
+
+.mark {
+    font-size: 40px;
+}
