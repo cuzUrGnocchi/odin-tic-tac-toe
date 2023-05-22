@@ -8,24 +8,61 @@
     --newspaper: rgb(220, 220, 220);
 }
 
-.page-container {
-    background-color: var(--newspaper);
-    min-height: 100vh;
+.hidden {
+    visibility: hidden;
 }
 
-.main-content {
+.page-container {
+    display: grid;
+    grid-template-columns: 1fr minmax(550px, 1000px) 1fr;
+    align-items: stretch;
+    background-color: rgb(50, 50, 50);
+    height: 100vh;
+    min-height: 600px;
+}
+
+.content-container {
+    grid-column: 2;
+    background-color: var(--newspaper);
+    padding: 30px 50px;
     display: flex;
-    justify-content: flex-start;
+    align-items: center;
+}
+
+.content {
+    width: 100%;
+    height: 500px;
+    display: grid;
+    grid-template-columns: 1fr 249px 1fr;
+}
+
+.player-header {
+    font-size: 22px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.player-name {
+    margin-left: 7px;
+}
+
+.turn-indicator {
+    width: 8px;
+    height: 8px;
+    margin-right: 7px;
+    align-self: center;
 }
 
 .board-container {
-    background-color: black;
+    grid-column: 2;
+    align-self: center;
+    background-color: black;    
 }
 
 .board {
     display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-template-rows: repeat(3, 100px);
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 80px);
     justify-items: stretch;
     align-items: stretch;
     gap: 3px;

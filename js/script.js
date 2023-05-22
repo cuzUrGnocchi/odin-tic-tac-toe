@@ -2,74 +2,86 @@ function Tile(xCoord, yCoord, mark = null) {
   const x = xCoord;
   const y = yCoord;
   let marker = mark;
+
   return {
     get x() {
       return x;
     },
+
     get y() {
       return y;
     },
+
     get marker() {
       return marker;
     },
+
     set marker(m) {
       marker = m;
     },
   };
 }
 
-function GameBoard() {
-  const board = [
-    Tile(0, 0), Tile(1, 0), Tile(2, 0),
-    Tile(0, 1), Tile(1, 1), Tile(2, 1),
-    Tile(0, 2), Tile(1, 2), Tile(2, 2),
+function Board(arr = [null, null, null, null, null, null, null, null, null]) {
+  const grid = [
+    Tile(0, 0, arr[0]), Tile(1, 0, arr[1]), Tile(2, 0, arr[2]),
+    Tile(0, 1, arr[3]), Tile(1, 1, arr[4]), Tile(2, 1, arr[5]),
+    Tile(0, 2, arr[6]), Tile(1, 2, arr[7]), Tile(2, 2, arr[8]),
   ];
+
   function getRows() {
     const rows = [];
     for (let i = 0; i < 3; i += 1) {
-      const row = board.filter(({ y }) => y === i);
+      const row = grid.filter(({ y }) => y === i);
       rows.push(row);
     }
     return rows;
   }
+
   function getColumns() {
     const columns = [];
     for (let i = 0; i < 3; i += 1) {
-      const column = board.filter(({ x }) => x === i);
+      const column = grid.filter(({ x }) => x === i);
       columns.push(column);
     }
     return columns;
   }
+
   function getDiagonals() {
-    const diagonals = [board.filter(({ x, y }) => x === y),
-      board.filter(({ x, y }) => x + y === 2)];
+    const diagonals = [grid.filter(({ x, y }) => x === y),
+      grid.filter(({ x, y }) => x + y === 2)];
     return diagonals;
   }
   return {
-    getTile(xCoord, yCoord) {
-      const row = board.filter(({ x }) => x === xCoord);
-      const tile = row.filter(({ y }) => y === yCoord)[0];
-      return tile;
+    get grid() {
+      return grid;
     },
-    get board() {
-      return board;
-    },
-    set board(array) {
-      for (let i = 0; i < board.length; i += 1) {
+
+    set grid(array) {
+      for (let i = 0; i < grid.length; i += 1) {
         this.getTile(i % 3, Math.floor(i / 3)).marker = array[i];
       }
     },
+
+    getTile(xCoord, yCoord) {
+      const row = grid.filter(({ x }) => x === xCoord);
+      const tile = row.filter(({ y }) => y === yCoord)[0];
+      return tile;
+    },
+
     addMarker(x, y, marker) {
       const tile = this.getTile(x, y);
       if (tile.marker === null) {
         tile.marker = marker;
       }
     },
+
     clear() {
-      for (let i = 0; i < board.length; i += 1) {
-        board[i].tile = null;
+      for (let i = 0; i < grid.length; i += 1) {
+        grid[i].marker = null;
       }
     },
+
     getLines() {
       const rows = getRows();
       const columns = getColumns();
@@ -87,9 +99,11 @@ function playerMixin(playerName, playerMarker) {
     get name() {
       return name;
     },
+
     set name(playerUserName) {
       name = playerUserName;
     },
+
     get marker() {
       return marker;
     },
@@ -97,66 +111,73 @@ function playerMixin(playerName, playerMarker) {
 }
 
 function Player(name, marker) {
-  function listenForClick() {
+  function getMoveCoordinates(board) {
     return new Promise((resolve) => {
       const tiles = document.querySelectorAll('.tile');
+
       tiles.forEach((tile) => {
-        function handleClick() {
-          tiles.forEach((tileView) => {
-            tileView.removeEventListener('click', handleClick);
-          });
-          const { row, column } = tile.dataset;
-          resolve({ x: +column, y: +row });
+        function getCoordinates() {
+          const coordinates = { x: +tile.dataset.column, y: +tile.dataset.row };
+
+          if (board.getTile(coordinates.x, coordinates.y).marker === null) {
+            resolve(coordinates);
+
+            tiles.forEach((t) => {
+              t.removeEventListener('click', getCoordinates);
+            });
+          }
         }
-        tile.addEventListener('click', handleClick);
+
+        tile.addEventListener('click', getCoordinates);
       });
     });
   }
+
   return playerMixin.call({
-    async makeMove(gameBoard) {
-      const { x, y } = await listenForClick();
-      if (gameBoard.getTile(x, y).marker === null) {
-        gameBoard.addMarker(x, y, this.marker);
+    async makeMove(board) {
+      const { x, y } = await getMoveCoordinates(board);
+
+      if (board.getTile(x, y).marker === null) {
+        board.addMarker(x, y, this.marker);
       }
-      return x && y ? Tile(x, y, this.marker) : null;
     },
   }, name, marker);
 }
 
 function Cpu(name, mark) {
-  function getWinner(gameBoard) {
+  function getWinner(board) {
     const markers = ['X', 'O'];
-    const lines = gameBoard.getLines();
+    const lines = board.getLines();
+
     for (let i = 0; i < lines.length; i += 1) {
-      const line = lines[i];
       for (let j = 0; j < markers.length; j += 1) {
-        if (line.every(({ marker }) => marker === markers[j])) {
+        if (lines[i].every(({ marker }) => marker === markers[j])) {
           return markers[j];
         }
       }
     }
+
     return null;
   }
 
-  function gameIsOver(gameBoard) {
-    return gameBoard.board.every(({ marker }) => marker !== null);
+  function gameIsOver(board) {
+    return board.grid.every(({ marker }) => marker !== null);
   }
 
-  function judgeMove(move, gameBoard, whoseChoice) {
-    const development = GameBoard();
-    development.board = gameBoard.board
-      .map((tile) => (tile.x === move.x && tile.y === move.y ? move.marker : tile.marker));
+  function judgeMove(move, board, player, depth = 0) {
+    const development = Board(board.grid.map((tile) => {
+      if (tile.x === move.x && tile.y === move.y) {
+        return move.marker;
+      }
 
-    let ownMarker = move.marker;
-    let opponentMarker = move.marker === 'X' ? 'O' : 'X';
+      return tile.marker;
+    }));
 
-    if (whoseChoice === 'opponent choice') {
-      ownMarker = move.marker === 'X' ? 'O' : 'X';
-      opponentMarker = move.marker;
-    }
+    const ownMarker = (player === 'self' && move.marker === 'X') || (player === 'opponent' && move.marker === 'O') ? 'X' : 'O';
+    const opponentMarker = ownMarker === 'X' ? 'O' : 'X';
 
     if (getWinner(development) === ownMarker) {
-      return 1;
+      return depth === 0 ? 2 : 1;
     }
     if (getWinner(development) === opponentMarker) {
       return -1;
@@ -165,52 +186,67 @@ function Cpu(name, mark) {
       return 0;
     }
 
-    const freeTiles = development.board.filter((tile) => tile.marker === null);
+    const subsequentMoves = development.grid.filter((tile) => tile.marker === null);
 
-    if (whoseChoice === 'my choice') {
-      let victoryIsPossible = false;
-      for (let i = 0; i < freeTiles.length; i += 1) {
-        const outcome = judgeMove(Tile(freeTiles[i].x, freeTiles[i].y, opponentMarker), development, 'opponent choice');
+    if (player === 'self') {
+      let victoryIsCertain = true;
+      for (let i = 0; i < subsequentMoves.length; i += 1) {
+        const subsequentMove = Tile(subsequentMoves[i].x, subsequentMoves[i].y, opponentMarker);
+        const outcome = judgeMove(subsequentMove, development, 'opponent', depth + 1);
+
         if (outcome === -1) {
           return -1;
         }
-        victoryIsPossible = true;
+
+        if (outcome === 0) {
+          victoryIsCertain = false;
+        }
       }
-      return victoryIsPossible ? 1 : 0;
+      return victoryIsCertain ? 1 : 0;
     }
 
-    for (let i = 0; i < freeTiles.length; i += 1) {
-      const outcome = judgeMove(Tile(freeTiles[i].x, freeTiles[i].y, ownMarker), development, 'my choice');
+    let defeatIsCertain = true;
+
+    for (let i = 0; i < subsequentMoves.length; i += 1) {
+      const subsequentMove = Tile(subsequentMoves[i].x, subsequentMoves[i].y, ownMarker);
+      const outcome = judgeMove(subsequentMove, development, 'self', depth + 1);
+
       if (outcome === 1) {
         return 1;
       }
-      if (i === freeTiles.length - 1 && outcome === 0) {
-        return 0;
+
+      if (outcome === 0) {
+        defeatIsCertain = false;
       }
     }
-    return -1;
+    return defeatIsCertain ? -1 : 0;
   }
-  function chooseRandomTile(tiles) {
+
+  function randomizeChoice(tiles) {
     const numberOfChoices = tiles.length;
     const choiceIndex = Math.floor(Math.random() * numberOfChoices);
     return tiles[choiceIndex];
   }
+
   return playerMixin.call({
-    makeMove(gameBoard) {
-      const moves = gameBoard.board
-        .filter(({ marker }) => marker === null)
+    makeMove(board) {
+      const possibleMoves = board.grid
+        .filter((tile) => tile.marker === null)
         .reduce((arr, { x, y }) => {
           const move = Tile(x, y, this.marker);
-          const priority = judgeMove(move, gameBoard, 'my choice');
+          const priority = judgeMove(move, board, 'self');
           return priority > -1 ? arr.concat({ move, priority }) : arr;
         }, []);
-      for (let prio = 1; prio >= 0; prio -= 1) {
-        const priorityGroup = moves
+
+      for (let prio = 2; prio >= 0; prio -= 1) {
+        const bestMoves = possibleMoves
           .filter(({ priority }) => priority === prio)
           .map(({ move }) => move);
-        if (priorityGroup.length > 0) {
-          const chosenTile = chooseRandomTile(priorityGroup);
-          gameBoard.addMarker(chosenTile.x, chosenTile.y, this.marker);
+
+        if (bestMoves.length > 0) {
+          const chosenTile = randomizeChoice(bestMoves);
+          board.addMarker(chosenTile.x, chosenTile.y, this.marker);
+          break;
         }
       }
     },
@@ -219,89 +255,133 @@ function Cpu(name, mark) {
 
 const view = (function view() {
   return {
-    update(gameBoard) {
+    updateBoard(grid) {
       const tiles = document.querySelectorAll('.mark');
-      const { board } = gameBoard;
       for (let i = 0; i < tiles.length; i += 1) {
-        const { marker } = board[i];
-        const tile = tiles[i];
-        tile.textContent = marker === null ? '' : marker;
+        const { marker } = grid[i];
+        tiles[i].textContent = marker === null ? '' : marker;
       }
+    },
+
+    setTurnIndicator(playerIndex) {
+      const turnIndicators = document.querySelectorAll('.turn-indicator');
+      turnIndicators[playerIndex].classList.remove('hidden');
+      turnIndicators[playerIndex === 0 ? 1 : 0].classList.add('hidden');
+    },
+
+    removeTurnIndicators() {
+      const turnIndicators = document.querySelectorAll('.turn-indicator');
+      turnIndicators.forEach((indicator) => { indicator.classList.add('hidden'); });
+    },
+
+    update(grid, currentPlayerIndex) {
+      this.updateBoard(grid);
+      this.setTurnIndicator(currentPlayerIndex);
     },
   };
 }());
 
 const game = (function game() {
-  const gameBoard = GameBoard();
+  const board = Board([]);
   const players = [];
-  let nextPlayer;
+  let currentPlayer;
+  let firstToGo;
   let winner;
   let gameOver;
 
-  gameBoard.board = [
+  board.grid = [
     null, null, null,
     null, null, null,
     null, null, null,
   ];
 
-  function updateWinner() {
-    const lines = gameBoard.getLines();
-    for (let i = 0; i < lines.length; i += 1) {
-      const line = lines[i];
-      for (let j = 0; j < players.length; j += 1) {
-        const player = players[j];
-        if (line.every(({ marker }) => marker === player.marker)) {
-          winner = player;
-          return;
+  function decideWhosFirst() {
+    return firstToGo ? players.filter((player) => player !== firstToGo)[0] : players[0];
+  }
+
+  function getNextPlayer() {
+    const currentIndex = players.indexOf(currentPlayer);
+    const successorIndex = currentIndex + 1 > players.length - 1 ? 0 : currentIndex + 1;
+    return players[successorIndex];
+  }
+
+  return {
+    get board() {
+      return board.grid;
+    },
+
+    get winner() {
+      const lines = board.getLines();
+
+      for (let i = 0; i < lines.length; i += 1) {
+        for (let j = 0; j < players.length; j += 1) {
+          const player = players[j];
+
+          if (lines[i].every(({ marker }) => marker === player.marker)) {
+            winner = player;
+            return winner;
+          }
         }
       }
-    }
-  }
-  function updateGameOver() {
-    const { board } = gameBoard;
-    const boardIsFull = board.every(({ marker }) => marker !== null);
-    gameOver = (winner || boardIsFull);
-  }
-  function decideWhosFirst() {
-    const randomIndex = Math.floor(Math.random() * 2);
-    nextPlayer = players[randomIndex];
-  }
-  function moveOnToNextPlayer() {
-    const currentIndex = players.indexOf(nextPlayer);
-    const successorIndex = currentIndex + 1 > players.length - 1 ? 0 : currentIndex + 1;
-    nextPlayer = players[successorIndex];
-  }
-  return {
+
+      winner = null;
+      return winner;
+    },
+
+    get gameOver() {
+      const boardIsFull = board.grid.every(({ marker }) => marker !== null);
+      gameOver = winner || boardIsFull;
+      return gameOver;
+    },
+
+    getCurrentPlayerIndex() {
+      return players.indexOf(currentPlayer);
+    },
+
     start(player1, player2) {
       players.push(player1, player2);
-      decideWhosFirst();
+      firstToGo = decideWhosFirst();
+      currentPlayer = firstToGo;
+
+      view.update(board.grid, this.getCurrentPlayerIndex());
+
       this.playTurn();
     },
+
+    reset() {
+      firstToGo = decideWhosFirst();
+      currentPlayer = firstToGo;
+      winner = null;
+      gameOver = false;
+
+      board.clear();
+
+      view.update(board.grid, this.getCurrentPlayerIndex());
+    },
+
     async playTurn() {
-      updateWinner();
-      updateGameOver();
-
-      if (winner) {
-        return;
-      }
-      if (gameOver) {
-        return;
+      if (!this.winner && !this.gameOver) {
+        await currentPlayer.makeMove(board);
       }
 
-      await nextPlayer.makeMove(gameBoard);
-      view.update(gameBoard);
+      if (this.winner) {
+        this.reset();
+      } else if (this.gameOver) {
+        this.reset();
+      } else {
+        currentPlayer = getNextPlayer();
+      }
 
-      moveOnToNextPlayer();
-      this.playTurn();
+      view.update(board.grid, this.getCurrentPlayerIndex());
+
+      requestAnimationFrame(() => { requestAnimationFrame(this.playTurn.bind(this)); });
     },
   };
 }());
 
 (function run() {
-  const startButton = document.querySelector('.start');
-  startButton.addEventListener('click', () => {
-    const cpu1 = Player('Joe', 'X');
-    const cpu2 = Cpu('MrDestructoid', 'O');
-    game.start(cpu1, cpu2);
-  });
+  const player = Player('Joe', 'X');
+  const cpu = Cpu('MrDestructoid', 'O');
+
+  game.start(player, cpu);
 }());
