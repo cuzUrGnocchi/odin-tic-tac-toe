@@ -274,9 +274,31 @@ const view = (function view() {
       turnIndicators.forEach((indicator) => { indicator.classList.add('hidden'); });
     },
 
-    update(grid, currentPlayerIndex) {
-      this.updateBoard(grid);
-      this.setTurnIndicator(currentPlayerIndex);
+    updateScore(score) {
+      const scoreBoard = document.querySelectorAll('.score');
+      for (let i = 0; i < 2; i += 1) {
+        const tallyMarks = [];
+        const playerScore = score[i];
+        const playerScoreBoard = scoreBoard[i];
+
+        for (let j = 0; j < Math.floor(playerScore / 5); j += 1) {
+          const fiveStickTallyMark = document.createElement('img');
+          fiveStickTallyMark.classList.add('tally-mark');
+          fiveStickTallyMark.setAttribute('src', './icons/tally-mark-5.svg');
+          fiveStickTallyMark.setAttribute('alt', '5 score units');
+          tallyMarks.push(fiveStickTallyMark);
+        }
+
+        if (playerScore % 5 > 0) {
+          const tallyMark = document.createElement('img');
+          tallyMark.setAttribute('src', `./icons/tally-mark-${playerScore % 5}.svg`);
+          tallyMark.classList.add('tally-mark');
+          tallyMark.setAttribute('alt', `${playerScore % 5} score unit${playerScore % 5 > 1 ? 's' : ''}`);
+          tallyMarks.push(tallyMark);
+        }
+
+        playerScoreBoard.replaceChildren(...tallyMarks);
+      }
     },
   };
 }());
@@ -284,8 +306,9 @@ const view = (function view() {
 const game = (function game() {
   const board = Board([]);
   const players = [];
-  let currentPlayer;
+  const score = [0, 0];
   let firstToGo;
+  let currentPlayer;
   let winner;
   let gameOver;
 
@@ -343,7 +366,8 @@ const game = (function game() {
       firstToGo = decideWhosFirst();
       currentPlayer = firstToGo;
 
-      view.update(board.grid, this.getCurrentPlayerIndex());
+      view.updateBoard(board.grid);
+      view.setTurnIndicator(this.getCurrentPlayerIndex());
 
       this.playTurn();
     },
@@ -356,7 +380,8 @@ const game = (function game() {
 
       board.clear();
 
-      view.update(board.grid, this.getCurrentPlayerIndex());
+      view.updateBoard(board.grid);
+      view.setTurnIndicator(this.getCurrentPlayerIndex());
     },
 
     async playTurn() {
@@ -365,6 +390,8 @@ const game = (function game() {
       }
 
       if (this.winner) {
+        score[players.indexOf(currentPlayer)] += 1;
+        view.updateScore(score);
         this.reset();
       } else if (this.gameOver) {
         this.reset();
@@ -372,7 +399,8 @@ const game = (function game() {
         currentPlayer = getNextPlayer();
       }
 
-      view.update(board.grid, this.getCurrentPlayerIndex());
+      view.updateBoard(board.grid);
+      view.setTurnIndicator(this.getCurrentPlayerIndex());
 
       requestAnimationFrame(() => { requestAnimationFrame(this.playTurn.bind(this)); });
     },
