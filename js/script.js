@@ -48,10 +48,13 @@ function Board(arr = [null, null, null, null, null, null, null, null, null]) {
   }
 
   function getDiagonals() {
-    const diagonals = [grid.filter(({ x, y }) => x === y),
-      grid.filter(({ x, y }) => x + y === 2)];
+    const diagonals = [
+      grid.filter(({ x, y }) => x === y),
+      grid.filter(({ x, y }) => x + y === 2),
+    ];
     return diagonals;
   }
+
   return {
     get grid() {
       return grid;
@@ -64,9 +67,7 @@ function Board(arr = [null, null, null, null, null, null, null, null, null]) {
     },
 
     getTile(xCoord, yCoord) {
-      const row = grid.filter(({ x }) => x === xCoord);
-      const tile = row.filter(({ y }) => y === yCoord)[0];
-      return tile;
+      return grid.filter(({ x, y }) => x === xCoord && y === yCoord)[0];
     },
 
     addMarker(x, y, marker) {
@@ -111,43 +112,37 @@ function playerMixin(playerName, playerMarker) {
 }
 
 function Player(name, marker) {
-  function getMoveCoordinates(board) {
-    return new Promise((resolve) => {
-      const tiles = document.querySelectorAll('.tile');
+  function waitForClick(board) {
+    const boardView = document.querySelector('.board');
 
-      tiles.forEach((tile) => {
-        function getCoordinates() {
-          const coordinates = { x: +tile.dataset.column, y: +tile.dataset.row };
+    return new Promise((resolve) => {
+      function getTileCoordinates(event) {
+        if (event.target.classList.contains('tile')) {
+          const coordinates = { x: +event.target.dataset.column, y: +event.target.dataset.row };
 
           if (board.getTile(coordinates.x, coordinates.y).marker === null) {
             resolve(coordinates);
 
-            tiles.forEach((t) => {
-              t.removeEventListener('click', getCoordinates);
-            });
+            boardView.removeEventListener('click', getTileCoordinates);
           }
         }
-
-        tile.addEventListener('click', getCoordinates);
-      });
+      }
+      boardView.addEventListener('click', getTileCoordinates);
     });
   }
 
   return playerMixin.call({
     async makeMove(board) {
-      const { x, y } = await getMoveCoordinates(board);
-
-      if (board.getTile(x, y).marker === null) {
-        board.addMarker(x, y, this.marker);
-      }
+      const coordinates = await waitForClick(board);
+      board.addMarker(coordinates.x, coordinates.y, this.marker);
     },
   }, name, marker);
 }
 
 function Cpu(name, mark) {
   function getWinner(board) {
-    const markers = ['X', 'O'];
     const lines = board.getLines();
+    const markers = ['X', 'O'];
 
     for (let i = 0; i < lines.length; i += 1) {
       for (let j = 0; j < markers.length; j += 1) {
@@ -156,7 +151,6 @@ function Cpu(name, mark) {
         }
       }
     }
-
     return null;
   }
 
@@ -190,6 +184,7 @@ function Cpu(name, mark) {
 
     if (player === 'self') {
       let victoryIsCertain = true;
+
       for (let i = 0; i < subsequentMoves.length; i += 1) {
         const subsequentMove = Tile(subsequentMoves[i].x, subsequentMoves[i].y, opponentMarker);
         const outcome = judgeMove(subsequentMove, development, 'opponent', depth + 1);
@@ -197,11 +192,11 @@ function Cpu(name, mark) {
         if (outcome === -1) {
           return -1;
         }
-
         if (outcome === 0) {
           victoryIsCertain = false;
         }
       }
+
       return victoryIsCertain ? 1 : 0;
     }
 
@@ -214,31 +209,30 @@ function Cpu(name, mark) {
       if (outcome === 1) {
         return 1;
       }
-
       if (outcome === 0) {
         defeatIsCertain = false;
       }
     }
+
     return defeatIsCertain ? -1 : 0;
   }
 
-  function randomizeChoice(tiles) {
-    const numberOfChoices = tiles.length;
-    const choiceIndex = Math.floor(Math.random() * numberOfChoices);
-    return tiles[choiceIndex];
+  function randomizeChoice(moves) {
+    const choiceIndex = Math.floor(Math.random() * moves.length);
+    return moves[choiceIndex];
   }
 
   return playerMixin.call({
     makeMove(board) {
       const possibleMoves = board.grid
-        .filter((tile) => tile.marker === null)
+        .filter(({ marker }) => marker === null)
         .reduce((arr, { x, y }) => {
           const move = Tile(x, y, this.marker);
           const priority = judgeMove(move, board, 'self');
-          return priority > -1 ? arr.concat({ move, priority }) : arr;
+          return arr.concat({ move, priority });
         }, []);
 
-      for (let prio = 2; prio >= 0; prio -= 1) {
+      for (let prio = 2; prio >= -1; prio -= 1) {
         const bestMoves = possibleMoves
           .filter(({ priority }) => priority === prio)
           .map(({ move }) => move);
@@ -256,10 +250,10 @@ function Cpu(name, mark) {
 const view = (function view() {
   return {
     updateBoard(grid) {
-      const tiles = document.querySelectorAll('.mark');
-      for (let i = 0; i < tiles.length; i += 1) {
+      const tileViews = document.querySelectorAll('.mark');
+      for (let i = 0; i < tileViews.length; i += 1) {
         const { marker } = grid[i];
-        tiles[i].textContent = marker === null ? '' : marker;
+        tileViews[i].textContent = marker === null ? '' : marker;
       }
     },
 
@@ -310,7 +304,7 @@ const game = (function game() {
   let firstToGo;
   let currentPlayer;
   let winner;
-  let gameOver;
+  let boardIsFull;
 
   board.grid = [
     null, null, null,
@@ -335,26 +329,22 @@ const game = (function game() {
 
     get winner() {
       const lines = board.getLines();
-
       for (let i = 0; i < lines.length; i += 1) {
         for (let j = 0; j < players.length; j += 1) {
           const player = players[j];
-
           if (lines[i].every(({ marker }) => marker === player.marker)) {
             winner = player;
             return winner;
           }
         }
       }
-
       winner = null;
       return winner;
     },
 
-    get gameOver() {
-      const boardIsFull = board.grid.every(({ marker }) => marker !== null);
-      gameOver = winner || boardIsFull;
-      return gameOver;
+    get boardIsFull() {
+      boardIsFull = board.grid.every(({ marker }) => marker !== null);
+      return boardIsFull;
     },
 
     getCurrentPlayerIndex() {
@@ -368,7 +358,6 @@ const game = (function game() {
 
       view.updateBoard(board.grid);
       view.setTurnIndicator(this.getCurrentPlayerIndex());
-
       this.playTurn();
     },
 
@@ -376,32 +365,28 @@ const game = (function game() {
       firstToGo = decideWhosFirst();
       currentPlayer = firstToGo;
       winner = null;
-      gameOver = false;
+      boardIsFull = false;
 
       board.clear();
-
       view.updateBoard(board.grid);
       view.setTurnIndicator(this.getCurrentPlayerIndex());
     },
 
     async playTurn() {
-      if (!this.winner && !this.gameOver) {
+      if (!this.winner && !this.boardIsFull) {
         await currentPlayer.makeMove(board);
       }
-
       if (this.winner) {
         score[players.indexOf(currentPlayer)] += 1;
         view.updateScore(score);
         this.reset();
-      } else if (this.gameOver) {
+      } else if (this.boardIsFull) {
         this.reset();
       } else {
         currentPlayer = getNextPlayer();
       }
-
       view.updateBoard(board.grid);
       view.setTurnIndicator(this.getCurrentPlayerIndex());
-
       requestAnimationFrame(() => { requestAnimationFrame(this.playTurn.bind(this)); });
     },
   };
