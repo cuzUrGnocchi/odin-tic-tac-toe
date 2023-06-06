@@ -344,11 +344,9 @@ const game = (function game() {
 
   function setTurnIndicator(player) {
     const currentPlayer = document.querySelector(`${player === 'one' ? '.player-one' : '.player-two'} .turn-indicator`);
-
     const nextPlayer = document.querySelector(`${player === 'one' ? '.player-two' : '.player-one'} .turn-indicator`);
 
     currentPlayer.classList.remove('hidden');
-
     nextPlayer.classList.add('hidden');
   }
 
@@ -439,6 +437,8 @@ const game = (function game() {
       } else {
         document.querySelector('.board').addEventListener('click', handleClick, { once: true });
       }
+    } else {
+      document.querySelector('.board').addEventListener('click', handleClick, { once: true });
     }
   }
 
