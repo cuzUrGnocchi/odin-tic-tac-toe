@@ -58,9 +58,7 @@ function Board(constructorMarkers = ['', '', '', '', '', '', '', '', '']) {
 
     getWinner() {
       let winner;
-
       const lines = getLines();
-
       const markers = ['X', 'O'];
 
       for (let i = 0; i < lines.length; i += 1) {
@@ -101,9 +99,7 @@ function Board(constructorMarkers = ['', '', '', '', '', '', '', '', '']) {
 
 function playerMixin(constructorName, constructorMarker) {
   let name = constructorName;
-
   let score = 0;
-
   const marker = constructorMarker;
 
   return Object.assign(this, {
@@ -144,7 +140,6 @@ function Cpu(name, marker) {
 
   function evaluateMove(move, board, player, depth = 0) {
     const development = Board(board.getAllTiles());
-
     development.setTile(move.x, move.y, move.marker);
 
     const markers = {
@@ -258,7 +253,6 @@ const game = (function game() {
   };
 
   let firstPlayer = Math.floor(Math.random() * 2) === 0 ? 'one' : 'two';
-
   let currentPlayer = firstPlayer;
 
   function decideWhosFirst() {
@@ -282,7 +276,7 @@ const game = (function game() {
       return currentPlayer;
     },
 
-    waitingForMove() {
+    waitingForClick() {
       return !player[currentPlayer].isCpu();
     },
 
@@ -294,15 +288,19 @@ const game = (function game() {
       if (
         !board.getWinner()
         && !board.isFull()
-        && ((x === undefined && y === undefined) || board.tileIsFree(x, y))
+        && (
+          (x === undefined && y === undefined)
+          || board.tileIsFree(x, y)
+        )
       ) {
         let move;
+
         const outcome = {
           winner: null,
           boardIsFull: false,
         };
 
-        if (this.waitingForMove()) {
+        if (this.waitingForClick()) {
           move = { x, y, marker: player[currentPlayer].getMarker() };
         } else {
           move = player[currentPlayer].comeUpWithMove(board);
@@ -335,27 +333,21 @@ const game = (function game() {
 }());
 
 (function view() {
-  function updateBoard(board) {
+  function updateBoard(boardState) {
     const boardView = document.querySelectorAll('.mark');
     for (let i = 0; i < boardView.length; i += 1) {
-      boardView[i].textContent = board[i];
+      boardView[i].textContent = boardState[i];
     }
   }
 
   function setTurnIndicator(player) {
-    const currentPlayer = document.querySelector(`${player === 'one' ? '.player-one' : '.player-two'} .turn-indicator`);
-    const nextPlayer = document.querySelector(`${player === 'one' ? '.player-two' : '.player-one'} .turn-indicator`);
+    const players = {
+      current: document.querySelector(`${player === 'one' ? '.player-one' : '.player-two'} .turn-indicator`),
+      next: document.querySelector(`${player === 'one' ? '.player-two' : '.player-one'} .turn-indicator`),
+    };
 
-    currentPlayer.classList.remove('hidden');
-    nextPlayer.classList.add('hidden');
-  }
-
-  function removeTurnIndicators() {
-    const turnIndicators = document.querySelectorAll('.turn-indicator');
-
-    turnIndicators.forEach((indicator) => {
-      indicator.classList.add('hidden');
-    });
+    players.current.classList.remove('hidden');
+    players.next.classList.add('hidden');
   }
 
   function updateScore(score) {
@@ -372,6 +364,7 @@ const game = (function game() {
         fiveStickTallyMark.classList.add('tally-mark');
         fiveStickTallyMark.setAttribute('src', './icons/tally-mark-5.svg');
         fiveStickTallyMark.setAttribute('alt', '5 score units');
+
         tallyMarks.push(fiveStickTallyMark);
       }
 
@@ -380,6 +373,7 @@ const game = (function game() {
         tallyMark.setAttribute('src', `./icons/tally-mark-${playerScore.value % 5}.svg`);
         tallyMark.classList.add('tally-mark');
         tallyMark.setAttribute('alt', `${playerScore.value % 5} score unit${playerScore.value % 5 > 1 ? 's' : ''}`);
+
         tallyMarks.push(tallyMark);
       }
 
@@ -387,67 +381,72 @@ const game = (function game() {
     }
   }
 
-  function executeCpuRoutine() {
-    if (!game.waitingForMove()) {
-      const followingOutcome = game.playTurn();
-      updateBoard(game.getBoard());
-      removeTurnIndicators();
-      requestAnimationFrame(() => {
-        if (followingOutcome.winner !== null || followingOutcome.boardIsFull) {
-          game.reset();
-          updateBoard(game.getBoard());
-          updateScore(game.getScore());
-        }
-        if (!game.waitingForMove()) {
-          requestAnimationFrame(executeCpuRoutine);
-        } else {
-          requestAnimationFrame(() => {
-            setTurnIndicator(game.getCurrentPlayer());
-            document.querySelector('.board').addEventListener('click', handleClick, { once: true });
-          });
-        }
-      });
-    }
+  function refreshUI() {
+    updateBoard(game.getBoard());
+    updateScore(game.getScore());
+    setTurnIndicator(game.getCurrentPlayer());
   }
 
   function handleClick(event) {
-    if (event.target.classList.contains('tile') || event.target.classList.contains('mark')) {
-      const coordinates = {
-        x: event.target.classList.contains('tile') ? +event.target.dataset.column : +event.target.parentNode.dataset.column,
-        y: event.target.classList.contains('tile') ? +event.target.dataset.row : +event.target.parentNode.dataset.row,
-      };
-      if (game.waitingForMove() && game.tileIsFree(coordinates.x, coordinates.y)) {
+    function executeCpuRoutine() {
+      if (!game.waitingForClick()) {
+        const followingOutcome = game.playTurn();
+        refreshUI();
+
         requestAnimationFrame(() => {
-          const outcome = game.playTurn(coordinates.x, coordinates.y);
-          updateBoard(game.getBoard());
-          removeTurnIndicators();
+          if (followingOutcome.winner !== null || followingOutcome.boardIsFull) {
+            game.reset();
+            refreshUI();
+          }
 
           requestAnimationFrame(() => {
-            if (outcome.winner !== null || outcome.boardIsFull) {
-              game.reset();
-              updateBoard(game.getBoard());
-              updateScore(game.getScore());
+            if (!game.waitingForClick()) {
+              executeCpuRoutine();
+            } else {
+              refreshUI();
+
+              requestAnimationFrame(() => {
+                document.querySelector('.board').addEventListener('click', handleClick, { once: true });
+              });
             }
-            if (!game.waitingForMove()) {
-              setTurnIndicator(game.getCurrentPlayer());
-            }
-            requestAnimationFrame(executeCpuRoutine);
           });
         });
-      } else {
-        document.querySelector('.board').addEventListener('click', handleClick, { once: true });
       }
-    } else {
-      document.querySelector('.board').addEventListener('click', handleClick, { once: true });
     }
+
+    if (!event.target.classList.contains('tile') && !event.target.classList.contains('mark')) {
+      document.querySelector('.board').addEventListener('click', handleClick, { once: true });
+      return;
+    }
+
+    const coordinates = {
+      x: event.target.classList.contains('tile') ? +event.target.dataset.column : +event.target.parentNode.dataset.column,
+      y: event.target.classList.contains('tile') ? +event.target.dataset.row : +event.target.parentNode.dataset.row,
+    };
+
+    if (!game.waitingForClick() || !game.tileIsFree(coordinates.x, coordinates.y)) {
+      document.querySelector('.board').addEventListener('click', handleClick, { once: true });
+      return;
+    }
+
+    const outcome = game.playTurn(coordinates.x, coordinates.y);
+    refreshUI();
+
+    requestAnimationFrame(() => {
+      if (outcome.winner !== null || outcome.boardIsFull) {
+        game.reset();
+      }
+      refreshUI();
+
+      requestAnimationFrame(executeCpuRoutine);
+    });
   }
 
   window.addEventListener('load', () => {
-    if (!game.waitingForMove()) {
+    if (!game.waitingForClick()) {
       game.playTurn();
-      updateBoard(game.getBoard());
     }
-    setTurnIndicator(game.getCurrentPlayer());
+    refreshUI();
   });
 
   document.querySelector('.board').addEventListener('click', handleClick, { once: true });
