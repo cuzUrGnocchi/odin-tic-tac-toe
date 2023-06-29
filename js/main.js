@@ -10,13 +10,11 @@ import game from './game.js';
   }
 
   function setTurnIndicator(player) {
-    const players = {
-      current: document.querySelector(`${player === 'one' ? '.player-one' : '.player-two'} .turn-indicator`),
-      next: document.querySelector(`${player === 'one' ? '.player-two' : '.player-one'} .turn-indicator`),
-    };
+    const currentPlayer = document.querySelector(`${player === 'one' ? '.player-one' : '.player-two'} .turn-indicator`);
+    const nextPlayer = document.querySelector(`${player === 'one' ? '.player-two' : '.player-one'} .turn-indicator`);
 
-    players.current.classList.remove('hidden');
-    players.next.classList.add('hidden');
+    currentPlayer.classList.remove('hidden');
+    nextPlayer.classList.add('hidden');
   }
 
   function updateScore(score) {
@@ -53,7 +51,7 @@ import game from './game.js';
   function refreshUI() {
     updateBoard(game.getBoard());
     updateScore(game.getScore());
-    setTurnIndicator(game.getCurrentPlayer());
+    setTurnIndicator(game.getPlayerIndex());
   }
 
   function handleClick(event) {

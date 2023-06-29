@@ -1,9 +1,9 @@
 import Board from './Board.js';
 import Player from './Player.js';
 
-class Cpu extends Player {
-  static #evaluateMove(move, board, player, depth = 0) {
-    const development = new Board(board.getAllTiles());
+const Cpu = (startingName, startingMarker) => {
+  function evaluateMove(move, board, player, depth = 0) {
+    const development = Board(board.getAllTiles());
     development.setTile(move.x, move.y, move.marker);
     const ownMarker = (player === 'self' && move.marker === 'X') || (player === 'opponent' && move.marker === 'O') ? 'X' : 'O';
     const opponentMarker = (player === 'self' && move.marker === 'X') || (player === 'opponent' && move.marker === 'O') ? 'O' : 'X';
@@ -28,7 +28,7 @@ class Cpu extends Player {
           y: subsequentMoves[i].y,
           marker: opponentMarker,
         };
-        const outcome = Cpu.#evaluateMove(subsequentMove, development, 'opponent', depth + 1);
+        const outcome = evaluateMove(subsequentMove, development, 'opponent', depth + 1);
 
         if (outcome === -1) {
           return -1;
@@ -50,7 +50,7 @@ class Cpu extends Player {
           y: subsequentMoves[i].y,
           marker: ownMarker,
         };
-        const outcome = Cpu.#evaluateMove(subsequentMove, development, 'self', depth + 1);
+        const outcome = evaluateMove(subsequentMove, development, 'self', depth + 1);
 
         if (outcome === 1) {
           return 1;
@@ -66,34 +66,42 @@ class Cpu extends Player {
     return null;
   }
 
-  static #randomizeChoice(moves) {
+  function randomizeChoice(moves) {
     return moves[Math.floor(Math.random() * moves.length)];
   }
 
-  comeUpWithMove(board) {
-    const possibleMoves = board.getFreeTiles()
-      .reduce((arr, tile) => {
-        const move = { x: tile.x, y: tile.y, marker: this.marker };
-        move.priority = Cpu.#evaluateMove(move, board, 'self');
+  return {
+    ...Player(startingName, startingMarker, 0),
 
-        return arr.concat({ ...move });
-      }, []);
+    comeUpWithMove(board) {
+      const possibleMoves = board.getFreeTiles()
+        .reduce((arr, tile) => {
+          const move = { x: tile.x, y: tile.y, marker: this.getMarker() };
+          move.priority = evaluateMove(move, board, 'self');
 
-    for (let priority = 2; priority >= -1; priority -= 1) {
-      const bestMoves = possibleMoves.filter((move) => move.priority === priority);
+          return arr.concat({ ...move });
+        }, []);
 
-      if (bestMoves.length > 0) {
-        const chosenTile = Cpu.#randomizeChoice(bestMoves);
-        return {
-          x: chosenTile.x,
-          y: chosenTile.y,
-          marker: this.marker,
-        };
+      for (let priority = 2; priority >= -1; priority -= 1) {
+        const bestMoves = possibleMoves.filter((move) => move.priority === priority);
+
+        if (bestMoves.length > 0) {
+          const chosenTile = randomizeChoice(bestMoves);
+          return {
+            x: chosenTile.x,
+            y: chosenTile.y,
+            marker: this.getMarker(),
+          };
+        }
       }
-    }
 
-    return null;
-  }
-}
+      return null;
+    },
+
+    isCpu() {
+      return true;
+    },
+  };
+};
 
 export default Cpu;

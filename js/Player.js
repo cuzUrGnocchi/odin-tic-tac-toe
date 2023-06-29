@@ -1,35 +1,33 @@
-class Player {
-  #name;
+const Player = (startingName, startingMarker) => {
+  let name = startingName;
+  const marker = startingMarker;
+  let score = 0;
 
-  #marker;
+  return {
+    getName() {
+      return name;
+    },
 
-  #score;
+    setName(newName) {
+      name = newName;
+    },
 
-  constructor(name, marker) {
-    this.#name = name;
-    this.#marker = marker;
-    this.#score = 0;
-  }
+    getMarker() {
+      return marker;
+    },
 
-  get name() {
-    return this.#name;
-  }
+    getScore() {
+      return score;
+    },
 
-  set name(name) {
-    this.#name = name;
-  }
+    incrementScore() {
+      score += 1;
+    },
 
-  get marker() {
-    return this.#marker;
-  }
-
-  get score() {
-    return this.#score;
-  }
-
-  incrementScore() {
-    this.#score += 1;
-  }
-}
+    isCpu() {
+      return false;
+    },
+  };
+};
 
 export default Player;

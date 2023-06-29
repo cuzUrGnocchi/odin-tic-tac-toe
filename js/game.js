@@ -3,23 +3,26 @@ import Player from './Player.js';
 import Cpu from './Cpu.js';
 
 const game = (function game() {
-  const board = new Board();
+  const board = Board();
 
-  const player = {
-    one: new Player('Player', 'X'),
-    two: new Cpu('CPU', 'O'),
-  };
+  const playerOne = Player('Player', 'X');
 
-  let firstPlayer = Math.floor(Math.random() * 2) === 0 ? 'one' : 'two';
+  const playerTwo = Cpu('CPU', 'O');
 
-  let currentPlayer = firstPlayer;
+  let startingPlayer = Math.floor(Math.random() * 2) === 0 ? 'one' : 'two';
+
+  let playerIndex = startingPlayer;
 
   function decideWhosFirst() {
-    return firstPlayer === 'one' ? 'two' : 'one';
+    return startingPlayer === 'one' ? 'two' : 'one';
   }
 
-  function getNextPlayer() {
-    return currentPlayer === 'one' ? 'two' : 'one';
+  function updatePlayerIndex() {
+    return playerIndex === 'one' ? 'two' : 'one';
+  }
+
+  function getCurrentPlayer() {
+    return playerIndex === 'one' ? playerOne : playerTwo;
   }
 
   return {
@@ -28,15 +31,15 @@ const game = (function game() {
     },
 
     getScore() {
-      return { playerOne: player.one.score, playerTwo: player.two.score };
+      return { playerOne: playerOne.getScore(), playerTwo: playerTwo.getScore() };
     },
 
-    getCurrentPlayer() {
-      return currentPlayer;
+    getPlayerIndex() {
+      return playerIndex;
     },
 
     waitingForClick() {
-      return !(player[currentPlayer] instanceof Cpu);
+      return !getCurrentPlayer().isCpu();
     },
 
     tileIsFree(x, y) {
@@ -61,30 +64,30 @@ const game = (function game() {
       }
 
       const move = this.waitingForClick()
-        ? { x, y, marker: player[currentPlayer].marker }
-        : player[currentPlayer].comeUpWithMove(board);
+        ? { x, y, marker: getCurrentPlayer().getMarker() }
+        : getCurrentPlayer().comeUpWithMove(board);
 
       board.setTile(move.x, move.y, move.marker);
 
       const outcome = {
-        winner: board.getWinner() ? currentPlayer : null,
+        winner: board.getWinner() ? playerIndex : null,
         boardIsFull: board.isFull(),
       };
 
       if (outcome.winner) {
-        player[currentPlayer].incrementScore();
+        getCurrentPlayer().incrementScore();
       }
 
       if (!board.getWinner() && !board.isFull()) {
-        currentPlayer = getNextPlayer();
+        playerIndex = updatePlayerIndex();
       }
 
       return outcome;
     },
 
     reset() {
-      firstPlayer = decideWhosFirst();
-      currentPlayer = firstPlayer;
+      startingPlayer = decideWhosFirst();
+      playerIndex = startingPlayer;
       board.clear();
     },
   };
