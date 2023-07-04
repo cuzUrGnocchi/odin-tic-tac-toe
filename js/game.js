@@ -1,6 +1,6 @@
 import Board from './Board.js';
 import Player from './Player.js';
-import AI from './AI.js';
+import ai from './ai.js';
 
 const game = (function game() {
   const board = Board();
@@ -65,7 +65,7 @@ const game = (function game() {
 
       const move = this.waitingForClick()
         ? { x, y, marker: getCurrentPlayer().getMarker() }
-        : AI.comeUpWithMove(board, getCurrentPlayer().getMarker());
+        : ai.comeUpWithMove(board, getCurrentPlayer().getMarker());
 
       board.setTile(move.x, move.y, move.marker);
 

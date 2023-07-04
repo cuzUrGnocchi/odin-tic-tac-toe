@@ -1,4 +1,4 @@
-const AI = (function AI() {
+const ai = (function ai() {
   function evaluateMove(move, board, player, depth = 0) {
     const development = board.theorizeMove(move.x, move.y, move.marker);
     const ownMarker = (player === 'self' && move.marker === 'X') || (player === 'opponent' && move.marker === 'O') ? 'X' : 'O';
@@ -94,4 +94,4 @@ const AI = (function AI() {
   };
 }());
 
-export default AI;
+export default ai;
