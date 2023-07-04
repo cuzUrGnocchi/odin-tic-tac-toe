@@ -1,13 +1,13 @@
 import Board from './Board.js';
 import Player from './Player.js';
-import Cpu from './Cpu.js';
+import AI from './AI.js';
 
 const game = (function game() {
   const board = Board();
 
-  const playerOne = Player('Player', 'X');
+  const playerOne = Player('Player', 'X', false);
 
-  const playerTwo = Cpu('CPU', 'O');
+  const playerTwo = Player('CPU', 'O', true);
 
   let startingPlayer = Math.floor(Math.random() * 2) === 0 ? 'one' : 'two';
 
@@ -65,7 +65,7 @@ const game = (function game() {
 
       const move = this.waitingForClick()
         ? { x, y, marker: getCurrentPlayer().getMarker() }
-        : getCurrentPlayer().comeUpWithMove(board);
+        : AI.comeUpWithMove(board, getCurrentPlayer().getMarker());
 
       board.setTile(move.x, move.y, move.marker);
 

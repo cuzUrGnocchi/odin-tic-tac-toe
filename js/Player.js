@@ -1,6 +1,5 @@
-const Player = (startingName, startingMarker) => {
+const Player = (startingName, marker, isCpu) => {
   let name = startingName;
-  const marker = startingMarker;
   let score = 0;
 
   return {
@@ -25,7 +24,7 @@ const Player = (startingName, startingMarker) => {
     },
 
     isCpu() {
-      return false;
+      return isCpu;
     },
   };
 };

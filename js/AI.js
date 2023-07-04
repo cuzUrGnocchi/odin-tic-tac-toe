@@ -1,10 +1,6 @@
-import Board from './Board.js';
-import Player from './Player.js';
-
-const Cpu = (startingName, startingMarker) => {
+const AI = (function AI() {
   function evaluateMove(move, board, player, depth = 0) {
-    const development = Board(board.getAllTiles());
-    development.setTile(move.x, move.y, move.marker);
+    const development = board.theorizeMove(move.x, move.y, move.marker);
     const ownMarker = (player === 'self' && move.marker === 'X') || (player === 'opponent' && move.marker === 'O') ? 'X' : 'O';
     const opponentMarker = (player === 'self' && move.marker === 'X') || (player === 'opponent' && move.marker === 'O') ? 'O' : 'X';
     const subsequentMoves = development.getFreeTiles();
@@ -71,12 +67,10 @@ const Cpu = (startingName, startingMarker) => {
   }
 
   return {
-    ...Player(startingName, startingMarker, 0),
-
-    comeUpWithMove(board) {
+    comeUpWithMove(board, marker) {
       const possibleMoves = board.getFreeTiles()
         .reduce((arr, tile) => {
-          const move = { x: tile.x, y: tile.y, marker: this.getMarker() };
+          const move = { x: tile.x, y: tile.y, marker };
           move.priority = evaluateMove(move, board, 'self');
 
           return arr.concat({ ...move });
@@ -90,18 +84,14 @@ const Cpu = (startingName, startingMarker) => {
           return {
             x: chosenTile.x,
             y: chosenTile.y,
-            marker: this.getMarker(),
+            marker,
           };
         }
       }
 
       return null;
     },
-
-    isCpu() {
-      return true;
-    },
   };
-};
+}());
 
-export default Cpu;
+export default AI;
