@@ -1,32 +1,33 @@
-const Player = (startingName, marker, isCpu) => {
-  let name = startingName;
-  let score = 0;
+class Player {
+  #name;
 
-  return {
-    getName() {
-      return name;
-    },
+  #marker;
 
-    setName(newName) {
-      name = newName;
-    },
+  constructor(name, marker) {
+    if (typeof name !== 'string') {
+      throw TypeError('Name provided is not a string');
+    }
+    if (marker !== 'X' && marker !== 'O') {
+      throw Error('Marker can only be either X or O');
+    }
+    this.#name = name;
+    this.#marker = marker;
+  }
 
-    getMarker() {
-      return marker;
-    },
+  get name() {
+    return this.#name;
+  }
 
-    getScore() {
-      return score;
-    },
+  set name(name) {
+    if (typeof name === 'string') {
+      throw TypeError('Name provided is not a string');
+    }
+    this.#name = name;
+  }
 
-    incrementScore() {
-      score += 1;
-    },
-
-    isCpu() {
-      return isCpu;
-    },
-  };
-};
+  get marker() {
+    return this.#marker;
+  }
+}
 
 export default Player;
