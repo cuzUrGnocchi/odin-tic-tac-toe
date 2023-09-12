@@ -34,6 +34,7 @@ function updateTurnIndicator() {
 function updateScoreboard() {
   for (let i = 0; i < 2; i += 1) {
     const scoreboard = document.querySelector(`.${i === 0 ? 'player-one' : 'player-two'} .score`);
+
     const tallyMarks = [];
 
     for (let j = 0; j < Math.floor(game.scoreboard[i] / 5); j += 1) {
@@ -58,39 +59,39 @@ function updateScoreboard() {
 
 function refreshUI() {
   updateBoard();
-  updateScoreboard();
   updateTurnIndicator();
+  updateScoreboard();
 }
 
-function handleClick(event) {
-  function executeCpuRoutine() {
-    if (game.players[game.currentPlayer] instanceof Cpu) {
-      game.playTurn();
-      refreshUI();
+let handleClick;
+
+const executeCpuRoutine = () => {
+  if (game.players[game.currentPlayer] instanceof Cpu) {
+    game.playTurn();
+    refreshUI();
+
+    requestAnimationFrame(() => {
+      if (game.winner !== null || game.board.every((t) => t !== '')) {
+        game.reset();
+        refreshUI();
+      }
 
       requestAnimationFrame(() => {
-        const boardFull = game.board.every((t) => t !== '');
-
-        if (game.winner !== null || boardFull) {
-          game.reset();
+        if (game.players[game.currentPlayer] instanceof Cpu) {
+          executeCpuRoutine();
+        } else {
           refreshUI();
+
+          requestAnimationFrame(() => {
+            document.querySelector('.board').addEventListener('click', handleClick, { once: true });
+          });
         }
-
-        requestAnimationFrame(() => {
-          if (game.players[game.currentPlayer] instanceof Cpu) {
-            executeCpuRoutine();
-          } else {
-            refreshUI();
-
-            requestAnimationFrame(() => {
-              document.querySelector('.board').addEventListener('click', handleClick, { once: true });
-            });
-          }
-        });
       });
-    }
+    });
   }
+};
 
+handleClick = (event) => {
   if (!event.target.classList.contains('tile') && !event.target.classList.contains('mark')) {
     document.querySelector('.board').addEventListener('click', handleClick, { once: true });
     return;
@@ -101,8 +102,10 @@ function handleClick(event) {
     y: event.target.classList.contains('tile') ? +event.target.dataset.row : +event.target.parentNode.dataset.row,
   };
 
-  if (game.players[game.currentPlayer] instanceof Cpu
-    || game.getTile(coordinates.x, coordinates.y) !== '') {
+  if (
+    game.players[game.currentPlayer] instanceof Cpu
+    || game.getTile(coordinates.x, coordinates.y) !== ''
+  ) {
     document.querySelector('.board').addEventListener('click', handleClick, { once: true });
     return;
   }
@@ -111,16 +114,14 @@ function handleClick(event) {
   refreshUI();
 
   requestAnimationFrame(() => {
-    const boardFull = game.board.every((t) => t !== '');
-
-    if (game.winner !== null || boardFull) {
+    if (game.winner !== null || game.board.every((t) => t !== '')) {
       game.reset();
     }
     refreshUI();
 
     requestAnimationFrame(executeCpuRoutine);
   });
-}
+};
 
 window.addEventListener('load', () => {
   updateNameplate();

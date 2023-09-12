@@ -1,17 +1,17 @@
 import Player from './Player.js';
 
 class Cpu extends Player {
-  #evaluateMove(x, y, marker, board, player, depth = 0) {
+  #evaluateMove(x, y, marker, board, depth = 0) {
     const development = board.clone();
-    const ownMarker = this.marker;
-    const opponentMarker = ownMarker === 'X' ? 'O' : 'X';
+    const self = this.marker;
+    const opponent = this.marker === 'X' ? 'O' : 'X';
 
     development.setTile(x, y, marker);
 
-    if (development.getWinner() === ownMarker) {
+    if (development.getWinner() === self) {
       return depth === 0 ? 2 : 1;
     }
-    if (development.getWinner() === opponentMarker) {
+    if (development.getWinner() === opponent) {
       return -1;
     }
     if (development.getEveryTile().every((t) => t !== '')) {
@@ -28,11 +28,17 @@ class Cpu extends Player {
       }
     }
 
-    if (player === 'self') {
+    if (marker === self) {
       let victoryIsCertain = true;
 
       for (let i = 0; i < freeTiles.length; i += 1) {
-        const outcome = this.#evaluateMove(freeTiles[i].x, freeTiles[i].y, opponentMarker, development, 'opponent', depth + 1);
+        const outcome = this.#evaluateMove(
+          freeTiles[i].x,
+          freeTiles[i].y,
+          opponent,
+          development,
+          depth + 1,
+        );
 
         if (outcome === -1) {
           return -1;
@@ -45,11 +51,17 @@ class Cpu extends Player {
       return victoryIsCertain ? 1 : 0;
     }
 
-    if (player === 'opponent') {
+    if (marker === opponent) {
       let defeatIsCertain = true;
 
       for (let i = 0; i < freeTiles.length; i += 1) {
-        const outcome = this.#evaluateMove(freeTiles[i].x, freeTiles[i].y, ownMarker, development, 'self', depth + 1);
+        const outcome = this.#evaluateMove(
+          freeTiles[i].x,
+          freeTiles[i].y,
+          this.marker,
+          development,
+          depth + 1,
+        );
 
         if (outcome === 1) {
           return 1;

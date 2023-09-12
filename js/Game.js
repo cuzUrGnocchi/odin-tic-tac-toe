@@ -3,9 +3,9 @@ import Player from './Player.js';
 import Cpu from './Cpu.js';
 
 class Game {
-  #players = [new Player('Player', 'X'), new Cpu('Cpu', 'O')];
-
   #board = new Board();
+
+  #players = [new Player('Player', 'X'), new Cpu('Cpu', 'O')];
 
   #scoreboard = [0, 0];
 
@@ -17,18 +17,6 @@ class Game {
 
   get board() {
     return this.#board.getEveryTile();
-  }
-
-  get scoreboard() {
-    return this.#scoreboard;
-  }
-
-  get winner() {
-    return this.#winner;
-  }
-
-  getTile(x, y) {
-    return this.#board.getTile(x, y);
   }
 
   get players() {
@@ -52,6 +40,14 @@ class Game {
     this.reset();
   }
 
+  get scoreboard() {
+    return this.#scoreboard;
+  }
+
+  get winner() {
+    return this.#winner;
+  }
+
   set startingPlayer(i) {
     if (!Number.isInteger(i)) {
       throw TypeError('Value provided is not an index');
@@ -65,6 +61,10 @@ class Game {
 
   get currentPlayer() {
     return this.#currentPlayer;
+  }
+
+  getTile(x, y) {
+    return this.#board.getTile(x, y);
   }
 
   playTurn(x, y) {

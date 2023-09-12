@@ -69,7 +69,6 @@ class Board {
         if (x === y) {
           diagonals[0].push(tile);
         }
-
         if (x + y === 2) {
           diagonals[1].push(tile);
         }

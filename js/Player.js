@@ -10,6 +10,7 @@ class Player {
     if (marker !== 'X' && marker !== 'O') {
       throw Error('Marker can only be either X or O');
     }
+
     this.#name = name;
     this.#marker = marker;
   }
@@ -22,6 +23,7 @@ class Player {
     if (typeof name === 'string') {
       throw TypeError('Name provided is not a string');
     }
+
     this.#name = name;
   }
 
