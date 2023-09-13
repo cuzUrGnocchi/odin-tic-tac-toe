@@ -1,35 +1,43 @@
-class Player {
-  #name;
-
-  #marker;
-
-  constructor(name, marker) {
-    if (typeof name !== 'string') {
-      throw TypeError('Name provided is not a string');
-    }
-    if (marker !== 'X' && marker !== 'O') {
-      throw Error('Marker can only be either X or O');
-    }
-
-    this.#name = name;
-    this.#marker = marker;
+function Player(name_, marker_) {
+  if (typeof name_ !== 'string') {
+    throw TypeError('Name provided is not a string');
+  }
+  if (marker_ !== 'X' && marker_ !== 'O') {
+    throw Error('Marker can only be either X or O');
   }
 
-  get name() {
-    return this.#name;
-  }
+  let privateName = name_;
+  let privateMarker = marker_;
 
-  set name(name) {
-    if (typeof name === 'string') {
-      throw TypeError('Name provided is not a string');
-    }
+  return {
+    getName() {
+      return privateName;
+    },
 
-    this.#name = name;
-  }
+    setName(name) {
+      if (typeof name === 'string') {
+        throw TypeError('Name provided is not a string');
+      }
 
-  get marker() {
-    return this.#marker;
-  }
+      privateName = name;
+    },
+
+    getMarker() {
+      return privateMarker;
+    },
+
+    setMarker(marker) {
+      if (marker !== 'X' && marker !== 'O') {
+        throw Error('Marker can only be either X or O');
+      }
+
+      privateMarker = marker;
+    },
+
+    isCpu() {
+      return false;
+    },
+  };
 }
 
 export default Player;

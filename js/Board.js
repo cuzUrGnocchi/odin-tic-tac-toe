@@ -1,93 +1,95 @@
-class Board {
-  #tiles = [
+function Board() {
+  const privateTiles = [
     '', '', '',
     '', '', '',
     '', '', '',
   ];
 
-  clone() {
-    const clone = new Board();
+  return {
+    getTile(x, y) {
+      if ((x < 0) || (x > 2) || (y < 0) || (y > 2)) {
+        throw new RangeError('Coordinates must be between 0 and 2');
+      }
+      if ((!Number.isInteger(x)) || (!Number.isInteger(y))) {
+        throw new TypeError('Coordinates must be integers');
+      }
 
-    for (let x = 0; x < 3; x += 1) {
-      for (let y = 0; y < 3; y += 1) {
-        if (this.getTile(x, y) !== '') {
-          clone.setTile(x, y, this.getTile(x, y));
+      return privateTiles[x + y * 3];
+    },
+
+    clone() {
+      const clone = Board();
+
+      for (let x = 0; x < 3; x += 1) {
+        for (let y = 0; y < 3; y += 1) {
+          if (this.getTile(x, y) !== '') {
+            clone.setTile(x, y, this.getTile(x, y));
+          }
         }
       }
-    }
 
-    return clone;
-  }
+      return clone;
+    },
 
-  getTile(x, y) {
-    if ((x < 0) || (x > 2) || (y < 0) || (y > 2)) {
-      throw new RangeError('Coordinates must be between 0 and 2');
-    }
-    if ((!Number.isInteger(x)) || (!Number.isInteger(y))) {
-      throw new TypeError('Coordinates must be integers');
-    }
+    setTile(x, y, marker) {
+      if ((x < 0) || (x > 2) || (y < 0) || (y > 2)) {
+        throw new RangeError('Coordinates must be between 0 and 2');
+      }
+      if ((marker !== 'X') && (marker !== 'O')) {
+        throw new Error('Board can only be marked with either X or O');
+      }
+      if (this.getTile(x, y) !== '') {
+        throw new Error('Tile is occupied');
+      }
 
-    return this.#tiles[x + y * 3];
-  }
+      privateTiles[x + y * 3] = marker;
+    },
 
-  setTile(x, y, marker) {
-    if ((x < 0) || (x > 2) || (y < 0) || (y > 2)) {
-      throw new RangeError('Coordinates must be between 0 and 2');
-    }
-    if ((marker !== 'X') && (marker !== 'O')) {
-      throw new Error('Board can only be marked with either X or O');
-    }
-    if (this.getTile(x, y) !== '') {
-      throw new Error('Tile is occupied');
-    }
+    getEveryTile() {
+      return [...privateTiles];
+    },
 
-    this.#tiles[x + y * 3] = marker;
-  }
+    clear() {
+      for (let i = 0; i < privateTiles.length; i += 1) {
+        privateTiles[i] = '';
+      }
+    },
 
-  getEveryTile() {
-    return [...this.#tiles];
-  }
+    getWinner() {
+      const rows = [[], [], []];
+      const columns = [[], [], []];
+      const diagonals = [[], []];
 
-  clear() {
-    for (let i = 0; i < this.#tiles.length; i += 1) {
-      this.#tiles[i] = '';
-    }
-  }
+      for (let x = 0; x < 3; x += 1) {
+        for (let y = 0; y < 3; y += 1) {
+          const tile = this.getTile(x, y);
 
-  getWinner() {
-    const rows = [[], [], []];
-    const columns = [[], [], []];
-    const diagonals = [[], []];
+          rows[y].push(tile);
+          columns[x].push(tile);
 
-    for (let x = 0; x < 3; x += 1) {
-      for (let y = 0; y < 3; y += 1) {
-        const tile = this.getTile(x, y);
-
-        rows[y].push(tile);
-        columns[x].push(tile);
-
-        if (x === y) {
-          diagonals[0].push(tile);
-        }
-        if (x + y === 2) {
-          diagonals[1].push(tile);
+          if (x === y) {
+            diagonals[0].push(tile);
+          }
+          if (x + y === 2) {
+            diagonals[1].push(tile);
+          }
         }
       }
-    }
 
-    const lines = [...rows, ...columns, ...diagonals];
-    const markers = ['X', 'O'];
+      const lines = [...rows, ...columns, ...diagonals];
+      const markers = ['X', 'O'];
 
-    for (let i = 0; i < lines.length; i += 1) {
-      for (let j = 0; j < markers.length; j += 1) {
-        if (lines[i].every((m) => m === markers[j])) {
-          return markers[j];
+      for (let i = 0; i < lines.length; i += 1) {
+        for (let j = 0; j < markers.length; j += 1) {
+          if (lines[i].every((m) => m === markers[j])) {
+            return markers[j];
+          }
         }
       }
-    }
 
-    return null;
-  }
+      return null;
+    },
+  };
 }
 
 export default Board;

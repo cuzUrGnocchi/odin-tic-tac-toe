@@ -1,9 +1,9 @@
 import Player from './Player.js';
 
-class Cpu extends Player {
-  #evaluateMove(x, y, marker, board, depth = 0) {
+function Cpu(name_, marker_) {
+  function evaluateMove(x, y, marker, board, depth = 0) {
     const development = board.clone();
-    const self = this.marker;
+    const self = this.getMarker();
     const opponent = this.marker === 'X' ? 'O' : 'X';
 
     development.setTile(x, y, marker);
@@ -32,12 +32,15 @@ class Cpu extends Player {
       let victoryIsCertain = true;
 
       for (let i = 0; i < freeTiles.length; i += 1) {
-        const outcome = this.#evaluateMove(
-          freeTiles[i].x,
-          freeTiles[i].y,
-          opponent,
-          development,
-          depth + 1,
+        const outcome = evaluateMove.apply(
+          this,
+          [
+            freeTiles[i].x,
+            freeTiles[i].y,
+            opponent,
+            development,
+            depth + 1,
+          ],
         );
 
         if (outcome === -1) {
@@ -55,12 +58,15 @@ class Cpu extends Player {
       let defeatIsCertain = true;
 
       for (let i = 0; i < freeTiles.length; i += 1) {
-        const outcome = this.#evaluateMove(
-          freeTiles[i].x,
-          freeTiles[i].y,
-          this.marker,
-          development,
-          depth + 1,
+        const outcome = evaluateMove.apply(
+          this,
+          [
+            freeTiles[i].x,
+            freeTiles[i].y,
+            this.getMarker(),
+            development,
+            depth + 1,
+          ],
         );
 
         if (outcome === 1) {
@@ -77,40 +83,48 @@ class Cpu extends Player {
     return null;
   }
 
-  comeUpWithMove(board) {
-    const freeTiles = [];
+  return {
+    ...Player(name_, marker_),
 
-    for (let x = 0; x < 3; x += 1) {
-      for (let y = 0; y < 3; y += 1) {
-        if (board.getTile(x, y) === '') {
-          freeTiles.push({ x, y });
+    comeUpWithMove(board) {
+      const freeTiles = [];
+
+      for (let x = 0; x < 3; x += 1) {
+        for (let y = 0; y < 3; y += 1) {
+          if (board.getTile(x, y) === '') {
+            freeTiles.push({ x, y });
+          }
         }
       }
-    }
 
-    const possibleMoves = freeTiles.reduce((arr, t) => arr.concat({
-      x: t.x,
-      y: t.y,
-      marker: this.marker,
-      priority: this.#evaluateMove(t.x, t.y, this.marker, board, 'self'),
-    }), []);
+      const possibleMoves = freeTiles.reduce((arr, t) => arr.concat({
+        x: t.x,
+        y: t.y,
+        marker: this.getMarker(),
+        priority: evaluateMove.apply(this, [t.x, t.y, this.getMarker(), board, 'self']),
+      }), []);
 
-    for (let priority = 2; priority >= -1; priority -= 1) {
-      const bestMoves = possibleMoves.filter((move) => move.priority === priority);
+      for (let priority = 2; priority >= -1; priority -= 1) {
+        const bestMoves = possibleMoves.filter((move) => move.priority === priority);
 
-      if (bestMoves.length > 0) {
-        const chosenTile = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        if (bestMoves.length > 0) {
+          const chosenTile = bestMoves[Math.floor(Math.random() * bestMoves.length)];
 
-        return {
-          x: chosenTile.x,
-          y: chosenTile.y,
-          marker: this.marker,
-        };
+          return {
+            x: chosenTile.x,
+            y: chosenTile.y,
+            marker: this.getMarker(),
+          };
+        }
       }
-    }
 
-    return null;
-  }
+      return null;
+    },
+
+    isCpu() {
+      return true;
+    },
+  };
 }
 
 export default Cpu;
