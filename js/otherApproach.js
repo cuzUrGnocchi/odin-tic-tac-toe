@@ -104,6 +104,8 @@ function Cpu(name, marker) {
       if (move.marker === self && outcome === -1) {
         return -1;
       }
+
+      outcomes.push(outcome);
     }
 
     if (outcomes.includes(0)) {
