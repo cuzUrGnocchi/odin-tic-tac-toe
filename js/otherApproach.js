@@ -95,27 +95,22 @@ function Cpu(name, marker) {
 
     for (let i = 0; i < development.freeTiles.length; i += 1) {
       const { x, y } = development.freeTiles[i];
-      const nextMove = { x, y, marker: this.marker };
-      outcomes.push(evaluateMove.apply(this, [nextMove, development, depth + 1]));
-    }
+      const nextMove = { x, y, marker: move.marker === this.marker ? opponent : this.marker };
+      const outcome = evaluateMove.apply(this, [nextMove, development, depth + 1]);
 
-    if (move.marker === opponent) {
-      if (outcomes.includes(1)) {
+      if (move.marker === opponent && outcome === 1) {
         return 1;
       }
-      if (outcomes.includes(0)) {
-        return 0;
+      if (move.marker === self && outcome === -1) {
+        return -1;
       }
-      return -1;
     }
 
-    if (outcomes.includes(-1)) {
-      return -1;
-    }
     if (outcomes.includes(0)) {
       return 0;
     }
-    return 1;
+
+    return move.marker === opponent ? -1 : 1;
   }
 
   function chooseMove(moves) {
