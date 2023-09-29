@@ -1,28 +1,4 @@
 function Board(tiles = ['', '', '', '', '', '', '', '', '']) {
-  function getLines(tiles_) {
-    const rows = [[], [], []];
-    const columns = [[], [], []];
-    const diagonals = [[], []];
-
-    for (let x = 0; x < 3; x += 1) {
-      for (let y = 0; y < 3; y += 1) {
-        const tile = tiles_.getTile(x, y);
-
-        rows[y].push(tile);
-        columns[x].push(tile);
-
-        if (x === y) {
-          diagonals[0].push(tile);
-        }
-        if (x + y === 2) {
-          diagonals[1].push(tile);
-        }
-      }
-    }
-
-    return [...rows, ...columns, ...diagonals];
-  }
-
   return {
     tiles: [...tiles],
 
@@ -33,15 +9,34 @@ function Board(tiles = ['', '', '', '', '', '', '', '', '']) {
     setTile(x, y, marker) {
       const newBoard = Board(this.tiles);
       newBoard.tiles[x + y * 3] = marker;
-
       return newBoard;
     },
 
-    clear() {
-      this.tiles = ['', '', '', '', '', '', '', '', ''];
-    },
-
     get winner() {
+      function getLines(tiles_) {
+        const rows = [[], [], []];
+        const columns = [[], [], []];
+        const diagonals = [[], []];
+
+        for (let x = 0; x < 3; x += 1) {
+          for (let y = 0; y < 3; y += 1) {
+            const tile = tiles_.getTile(x, y);
+
+            rows[y].push(tile);
+            columns[x].push(tile);
+
+            if (x === y) {
+              diagonals[0].push(tile);
+            }
+            if (x + y === 2) {
+              diagonals[1].push(tile);
+            }
+          }
+        }
+
+        return [...rows, ...columns, ...diagonals];
+      }
+
       const lines = getLines(this);
       const markers = ['X', 'O'];
 
@@ -77,23 +72,17 @@ function Board(tiles = ['', '', '', '', '', '', '', '', '']) {
 }
 
 function Player(name, marker) {
-  return {
-    name,
-
-    marker,
-
-    isCpu: false,
-  };
+  return { name, marker, isCpu: false };
 }
 
 function Cpu(name, marker) {
-  function evaluateMove(x_, y_, marker_, board_, depth_ = 0) {
+  function evaluateMove(move, board, depth = 0) {
     const self = this.marker;
     const opponent = this.marker === 'X' ? 'O' : 'X';
-    const development = board_.setTile(x_, y_, marker_);
+    const development = board.setTile(move.x, move.y, move.marker);
 
     if (development.winner === self) {
-      return depth_ === 0 ? 2 : 1;
+      return depth === 0 ? 2 : 1;
     }
     if (development.winner === opponent) {
       return -1;
@@ -102,12 +91,13 @@ function Cpu(name, marker) {
       return 0;
     }
 
-    if (marker_ === self) {
+    if (move.marker === self) {
       let victoryIsCertain = true;
 
       for (let i = 0; i < development.freeTiles.length; i += 1) {
-        const t = development.freeTiles[i];
-        const outcome = evaluateMove.apply(this, [t.x, t.y, opponent, development, depth_ + 1]);
+        const { x, y } = development.freeTiles[i];
+        const nextMove = { x, y, marker: opponent };
+        const outcome = evaluateMove.apply(this, [nextMove, development, depth + 1]);
 
         if (outcome === -1) {
           return -1;
@@ -120,12 +110,13 @@ function Cpu(name, marker) {
       return victoryIsCertain ? 1 : 0;
     }
 
-    if (marker_ === opponent) {
+    if (move.marker === opponent) {
       let defeatIsCertain = true;
 
       for (let i = 0; i < development.freeTiles.length; i += 1) {
-        const t = development.freeTiles[i];
-        const outcome = evaluateMove.apply(this, [t.x, t.y, this.marker, development, depth_ + 1]);
+        const { x, y } = development.freeTiles[i];
+        const nextMove = { x, y, marker: this.marker };
+        const outcome = evaluateMove.apply(this, [nextMove, development, depth + 1]);
 
         if (outcome === 1) {
           return 1;
@@ -141,9 +132,9 @@ function Cpu(name, marker) {
     return null;
   }
 
-  function chooseMove(moves_) {
+  function chooseMove(moves) {
     for (let priority = 2; priority >= -1; priority -= 1) {
-      const bestMoves = moves_.filter((move) => move.priority === priority);
+      const bestMoves = moves.filter((move) => move.priority === priority);
 
       if (bestMoves.length > 0) {
         const chosenMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
@@ -166,13 +157,13 @@ function Cpu(name, marker) {
       const possibleMoves = [];
 
       for (let i = 0; i < board.freeTiles.length; i += 1) {
-        const t = board.freeTiles[i];
+        const { x, y } = board.freeTiles[i];
 
         possibleMoves.push({
-          x: t.x,
-          y: t.y,
+          x,
+          y,
           marker: this.marker,
-          priority: evaluateMove.apply(this, [t.x, t.y, this.marker, board]),
+          priority: evaluateMove.apply(this, [{ x, y, marker: this.marker }, board]),
         });
       }
 
@@ -183,23 +174,19 @@ function Cpu(name, marker) {
   };
 }
 
-const game = (function game() {
+function GameState() {
   const rng = Math.floor(Math.random() * 2);
 
   return {
     board: Board(),
-
     players: [Player('Player', 'X'), Cpu('Cpu', 'O')],
-
     scoreboard: [0, 0],
-
     startingPlayer: rng,
-
     playerIndex: rng,
 
     playTurn(x, y) {
       if (this.board.winner || this.board.isFull) {
-        return;
+        return this;
       }
 
       let move;
@@ -210,38 +197,52 @@ const game = (function game() {
         move = this.players[this.playerIndex].comeUpWithMove(this.board);
       }
 
-      this.board = this.board.setTile(move.x, move.y, move.marker);
+      const nextState = GameState();
+      nextState.board = this.board.setTile(move.x, move.y, move.marker);
+      nextState.scoreboard = this.scoreboard;
 
-      if (this.board.winner) {
-        this.scoreboard[this.playerIndex] += 1;
+      if (nextState.board.winner) {
+        nextState.scoreboard[this.playerIndex] += 1;
       }
 
       if (!this.board.winner && !this.board.isFull) {
-        this.playerIndex = this.playerIndex === 0 ? 1 : 0;
+        nextState.playerIndex = this.playerIndex === 0 ? 1 : 0;
       }
+
+      nextState.startingPlayer = this.startingPlayer;
+      nextState.players = this.players;
+
+      return nextState;
     },
 
     reset() {
-      this.board.clear();
-      this.startingPlayer = this.startingPlayer === 0 ? 1 : 0;
-      this.playerIndex = this.startingPlayer;
+      const nextState = GameState();
+      nextState.board = Board();
+      nextState.players = this.players;
+      nextState.scoreboard = this.scoreboard;
+      nextState.startingPlayer = this.startingPlayer === 0 ? 1 : 0;
+      nextState.playerIndex = nextState.startingPlayer;
+
+      return nextState;
     },
   };
-}());
+}
 
 (function view() {
+  let gameState = GameState();
+
   function updateBoard() {
     const board = document.querySelectorAll('.mark');
 
     for (let i = 0; i < 9; i += 1) {
-      board[i].textContent = game.board.tiles[i];
+      board[i].textContent = gameState.board.tiles[i];
     }
   }
 
   function updateNameplate() {
     for (let i = 0; i < 2; i += 1) {
       const nameplate = document.querySelector(`.${i === 0 ? 'player-one' : 'player-two'} .player-name`);
-      nameplate.textContent = game.players[i].name;
+      nameplate.textContent = gameState.players[i].name;
     }
   }
 
@@ -249,7 +250,7 @@ const game = (function game() {
     for (let i = 0; i < 2; i += 1) {
       const turnIndicator = document.querySelector(`.${i === 0 ? 'player-one' : 'player-two'} .turn-indicator`);
 
-      if (i === game.playerIndex) {
+      if (i === gameState.playerIndex) {
         turnIndicator.classList.remove('hidden');
       } else {
         turnIndicator.classList.add('hidden');
@@ -263,7 +264,7 @@ const game = (function game() {
 
       const tallyMarks = [];
 
-      for (let j = 0; j < Math.floor(game.scoreboard[i] / 5); j += 1) {
+      for (let j = 0; j < Math.floor(gameState.scoreboard[i] / 5); j += 1) {
         const fiveTallies = document.createElement('img');
         fiveTallies.classList.add('tally-mark');
         fiveTallies.setAttribute('src', './icons/tally-mark-5.svg');
@@ -271,11 +272,11 @@ const game = (function game() {
         tallyMarks.push(fiveTallies);
       }
 
-      if (game.scoreboard[i] % 5 > 0) {
+      if (gameState.scoreboard[i] % 5 > 0) {
         const singleTally = document.createElement('img');
-        singleTally.setAttribute('src', `./icons/tally-mark-${game.scoreboard[i] % 5}.svg`);
+        singleTally.setAttribute('src', `./icons/tally-mark-${gameState.scoreboard[i] % 5}.svg`);
         singleTally.classList.add('tally-mark');
-        singleTally.setAttribute('alt', `${game.scoreboard[i] % 5} score unit${game.scoreboard[i] % 5 > 1 ? 's' : ''}`);
+        singleTally.setAttribute('alt', `${gameState.scoreboard[i] % 5} score unit${gameState.scoreboard[i] % 5 > 1 ? 's' : ''}`);
         tallyMarks.push(singleTally);
       }
 
@@ -292,18 +293,18 @@ const game = (function game() {
   let handleClick;
 
   const executeCpuRoutine = () => {
-    if (game.players[game.playerIndex].isCpu) {
-      game.playTurn();
+    if (gameState.players[gameState.playerIndex].isCpu) {
+      gameState = gameState.playTurn();
       refreshUI();
 
       requestAnimationFrame(() => {
-        if (game.board.winner || game.board.isFull) {
-          game.reset();
+        if (gameState.board.winner || gameState.board.isFull) {
+          gameState = gameState.reset();
           refreshUI();
         }
 
         requestAnimationFrame(() => {
-          if (game.players[game.playerIndex].isCpu) {
+          if (gameState.players[gameState.playerIndex].isCpu) {
             executeCpuRoutine();
           } else {
             refreshUI();
@@ -328,17 +329,17 @@ const game = (function game() {
       y: event.target.classList.contains('tile') ? +event.target.dataset.row : +event.target.parentNode.dataset.row,
     };
 
-    if (game.players[game.playerIndex].isCpu || game.board.getTile(coordinates.x, coordinates.y) !== '') {
+    if (gameState.players[gameState.playerIndex].isCpu || gameState.board.getTile(coordinates.x, coordinates.y) !== '') {
       document.querySelector('.board').addEventListener('click', handleClick, { once: true });
       return;
     }
 
-    game.playTurn(coordinates.x, coordinates.y);
+    gameState = gameState.playTurn(coordinates.x, coordinates.y);
     refreshUI();
 
     requestAnimationFrame(() => {
-      if (game.board.winner || game.board.isFull) {
-        game.reset();
+      if (gameState.board.winner || gameState.board.isFull) {
+        gameState = gameState.reset();
       }
       refreshUI();
 
@@ -349,8 +350,8 @@ const game = (function game() {
   window.addEventListener('load', () => {
     updateNameplate();
 
-    if (game.players[game.playerIndex].isCpu) {
-      game.playTurn();
+    if (gameState.players[gameState.playerIndex].isCpu) {
+      gameState = gameState.playTurn();
     }
 
     refreshUI();
