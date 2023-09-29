@@ -91,45 +91,31 @@ function Cpu(name, marker) {
       return 0;
     }
 
-    if (move.marker === self) {
-      let victoryIsCertain = true;
+    const outcomes = [];
 
-      for (let i = 0; i < development.freeTiles.length; i += 1) {
-        const { x, y } = development.freeTiles[i];
-        const nextMove = { x, y, marker: opponent };
-        const outcome = evaluateMove.apply(this, [nextMove, development, depth + 1]);
-
-        if (outcome === -1) {
-          return -1;
-        }
-        if (outcome === 0) {
-          victoryIsCertain = false;
-        }
-      }
-
-      return victoryIsCertain ? 1 : 0;
+    for (let i = 0; i < development.freeTiles.length; i += 1) {
+      const { x, y } = development.freeTiles[i];
+      const nextMove = { x, y, marker: this.marker };
+      outcomes.push(evaluateMove.apply(this, [nextMove, development, depth + 1]));
     }
 
     if (move.marker === opponent) {
-      let defeatIsCertain = true;
-
-      for (let i = 0; i < development.freeTiles.length; i += 1) {
-        const { x, y } = development.freeTiles[i];
-        const nextMove = { x, y, marker: this.marker };
-        const outcome = evaluateMove.apply(this, [nextMove, development, depth + 1]);
-
-        if (outcome === 1) {
-          return 1;
-        }
-        if (outcome === 0) {
-          defeatIsCertain = false;
-        }
+      if (outcomes.includes(1)) {
+        return 1;
       }
-
-      return defeatIsCertain ? -1 : 0;
+      if (outcomes.includes(0)) {
+        return 0;
+      }
+      return -1;
     }
 
-    return null;
+    if (outcomes.includes(-1)) {
+      return -1;
+    }
+    if (outcomes.includes(0)) {
+      return 0;
+    }
+    return 1;
   }
 
   function chooseMove(moves) {
