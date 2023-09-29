@@ -31,7 +31,10 @@ function Board(tiles = ['', '', '', '', '', '', '', '', '']) {
     },
 
     setTile(x, y, marker) {
-      this.tiles[x + y * 3] = marker;
+      const newBoard = Board(this.tiles);
+      newBoard.tiles[x + y * 3] = marker;
+
+      return newBoard;
     },
 
     clear() {
@@ -87,9 +90,7 @@ function Cpu(name, marker) {
   function evaluateMove(x_, y_, marker_, board_, depth_ = 0) {
     const self = this.marker;
     const opponent = this.marker === 'X' ? 'O' : 'X';
-    const development = Board(board_.tiles);
-
-    development.setTile(x_, y_, marker_);
+    const development = board_.setTile(x_, y_, marker_);
 
     if (development.winner === self) {
       return depth_ === 0 ? 2 : 1;
@@ -209,7 +210,7 @@ const game = (function game() {
         move = this.players[this.playerIndex].comeUpWithMove(this.board);
       }
 
-      this.board.setTile(move.x, move.y, move.marker);
+      this.board = this.board.setTile(move.x, move.y, move.marker);
 
       if (this.board.winner) {
         this.scoreboard[this.playerIndex] += 1;
