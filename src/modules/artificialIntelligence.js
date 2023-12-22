@@ -16,7 +16,7 @@ function chooseMove(moves) {
   return null;
 }
 
-const ai = {
+const artificialIntelligence = {
   evaluateMove(move, board, self, depth = 0) {
     const opponent = self === 'X' ? 'O' : 'X';
     const development = board.setTile(move.x, move.y, move.marker);
@@ -73,4 +73,4 @@ const ai = {
   },
 };
 
-export default ai;
+export default artificialIntelligence;

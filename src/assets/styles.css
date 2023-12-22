@@ -1,0 +1,66 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --newspaper: rgb(220, 220, 220);
+}
+
+body {
+  height: 100vh;
+  background-color: var(--newspaper);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-content: center;
+  justify-content: center;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 540;
+}
+
+.board {
+  justify-self: center;
+  align-self: start;
+  display: grid;
+  grid-template-columns: repeat(3, 70px);
+  grid-template-rows: repeat(3, 70px);
+  gap: 2px;
+  background-color: black;
+}
+
+.tile {
+  background-color: var(--newspaper);
+  font-size: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mark {
+  font-size: 40px;
+}
+
+.sidebar {
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  align-content: center;
+  align-items: center;
+  column-gap: 25px;
+  row-gap: 10px;
+}
+
+.sidebar > h2 {
+  line-height: 24px;
+  font-size: 24px;
+  font-weight: 500;
+  text-wrap: nowrap;
+}
+
+.sidebar > p {
+  line-height: 24px;
+  font-size: 24px;
+}

@@ -1,7 +1,7 @@
 import Board from './Board.js';
-import ai from './ai.js';
+import artificialIntelligence from '../modules/artificialIntelligence.js';
 
-class GameState {
+class Game {
   #board;
 
   #players;
@@ -70,7 +70,10 @@ class GameState {
     if (!(this.#players[this.#playerIndex].isCpu)) {
       move = { x, y, marker: this.#players[this.#playerIndex].marker };
     } else {
-      move = ai.comeUpWithMove(this.#board, this.#players[this.#playerIndex].marker);
+      move = artificialIntelligence.comeUpWithMove(
+        this.#board,
+        this.#players[this.#playerIndex].marker,
+      );
     }
 
     const nextState = {};
@@ -93,7 +96,7 @@ class GameState {
     nextState.startingPlayer = this.#startingPlayer;
     nextState.players = this.#players;
 
-    return new GameState(nextState);
+    return new Game(nextState);
   }
 
   reset() {
@@ -105,8 +108,8 @@ class GameState {
     nextState.playerIndex = nextState.startingPlayer;
     nextState.tieCount = this.#tieCount;
 
-    return new GameState(nextState);
+    return new Game(nextState);
   }
 }
 
-export default GameState;
+export default Game;
