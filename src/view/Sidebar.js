@@ -6,13 +6,14 @@ function renderSidebar() {
   const sidebar = document.createElement('div');
   sidebar.classList.add('sidebar');
 
-  const goalTitle = document.createElement('h2');
-  goalTitle.textContent = 'Goal';
-  sidebar.appendChild(goalTitle);
-
   const goalDescription = document.createElement('p');
   goalDescription.textContent = 'Force a tie 10 times in a row in under 35 seconds';
   sidebar.appendChild(goalDescription);
+
+  const startButton = document.createElement('button');
+  startButton.classList.add('start-button');
+  startButton.textContent = 'Start';
+  sidebar.appendChild(startButton);
 
   // const timerTitle = document.createElement('h2');
   // timerTitle.textContent = 'Time left';
