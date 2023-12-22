@@ -12,9 +12,10 @@ body {
   height: 100vh;
   background-color: var(--newspaper);
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 300px 600px;
   align-content: center;
   justify-content: center;
+  column-gap: 100px; 
 }
 
 h2 {
@@ -23,7 +24,7 @@ h2 {
 }
 
 .board {
-  justify-self: center;
+  justify-self: end;
   align-self: start;
   display: grid;
   grid-template-columns: repeat(3, 70px);
