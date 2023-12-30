@@ -6,6 +6,7 @@ function renderCountdownTimer(initialTime) {
 
   const timer = document.createElement('p');
   timer.textContent = timeRemaining.getValue({ getSeconds: true }).seconds;
+  timer.classList.add('timer');
 
   return Object.assign(timer, {
     start() {
