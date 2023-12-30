@@ -11,7 +11,8 @@
 body {
   height: 100vh;
   background-color: var(--newspaper);
-  display: flex;
+  display: grid;
+  grid-template-columns: 214px 600px;
   justify-content: center;
   align-items: center;
   column-gap: 70px; 
@@ -23,6 +24,8 @@ h2 {
 }
 
 .board {
+  height: 214px;
+  width: 214px;
   display: grid;
   grid-template-columns: repeat(3, 70px);
   grid-template-rows: repeat(3, 70px);
@@ -44,11 +47,16 @@ h2 {
 
 .sidebar {
   display: grid;
-  grid-template-columns: 300px 300px;
+  grid-template-columns: 600px;
   grid-template-rows: 30px 30px 50px;
   justify-items: center;
   align-items: center;
+  justify-self: center;
   row-gap: 10px;
+}
+
+.sidebar.in-game {
+  grid-template-columns: 180px 60px;
 }
 
 .sidebar > p {
@@ -96,22 +104,41 @@ button {
   grid-column: 1 / 3;
 }
 
-.goal, .streak-title, .streak, .timer-title, .retire-button {
+.goal, .streak-title, .streak, .timer-title, .timer, .retire-button, body {
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+}
+
+.goal, .streak-title, .streak, .timer-title, .timer, .retire-button  {
   animation-name: text-fade-in;
-  animation-duration: 0.5s;
-  animation-fill-mode: forwards;
 }
 
-.sidebar.in-game {
-  animation-name: sidebar-in-game;
-  animation-duration: 0.5s;
-  animation-fill-mode: forwards;
+body.pre-game {
+  animation-name: expand-body;
+} 
+
+body.in-game {
+  animation-name: shrink-body;
 }
 
-.sidebar.pre-game {
-  animation-name: sidebar-pre-game;
-  animation-duration: 0.5s;
-  animation-fill-mode: forwards;
+@keyframes expand-body {
+  from {
+    grid-template-columns: 214px 240px;
+  }
+
+  to {
+    grid-template-columns: 214px 600px;
+  }
+}
+
+@keyframes shrink-body {
+  from {
+    grid-template-columns: 214px 600px;
+  }
+
+  to {
+    grid-template-columns: 214px 240px;
+  }
 }
 
 @keyframes text-fade-in {
@@ -121,23 +148,5 @@ button {
 
   to {
     color: black;
-  }
-}
-
-@keyframes sidebar-in-game {
-  from {
-    grid-template-columns: 300px 300px;
-  }
-  to {
-    grid-template-columns: 180px 60px;
-  }
-}
-
-@keyframes sidebar-pre-game {
-  from {
-    grid-template-columns: 180px 60px;
-  }
-  to {
-    grid-template-columns: 300px 300px;
   }
 }

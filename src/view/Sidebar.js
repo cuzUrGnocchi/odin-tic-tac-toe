@@ -12,10 +12,9 @@ function renderSidebar() {
     }
   };
 
-  const stop = (clickHandler) => {
+  const retire = (clickHandler) => {
     removeChildren();
 
-    sidebar.classList.add('pre-game');
     sidebar.classList.remove('in-game');
 
     const goal = document.createElement('p');
@@ -28,20 +27,21 @@ function renderSidebar() {
     startButton.textContent = 'Start';
     sidebar.appendChild(startButton);
 
-    startButton.addEventListener('click', () => clickHandler({ gameInProgress: false }));
+    startButton.addEventListener('click', () => clickHandler({ timerRunning: false }));
+
+    sidebar.dispatchEvent(new CustomEvent('retireButtonClicked'));
   };
 
   const clickHandler = (details = {}) => {
     removeChildren();
 
-    if (details.gameInProgress) {
-      stop(clickHandler);
+    if (details.timerRunning) {
+      retire(clickHandler);
 
       return;
     }
 
     sidebar.classList.add('in-game');
-    sidebar.classList.remove('pre-game');
 
     const streakTitle = document.createElement('h2');
     streakTitle.classList.add('streak-title');
@@ -67,11 +67,13 @@ function renderSidebar() {
     sidebar.appendChild(timer);
 
     retireButton.addEventListener('click', () => {
-      clickHandler({ gameInProgress: true });
+      clickHandler({ timerRunning: true });
     });
+
+    sidebar.dispatchEvent(new CustomEvent('startButtonClicked'));
   };
 
-  stop(clickHandler);
+  retire(clickHandler);
 
   return sidebar;
 }
