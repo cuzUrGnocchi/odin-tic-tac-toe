@@ -1,5 +1,5 @@
 import Board from './Board.js';
-import artificialIntelligence from '../modules/artificialIntelligence.js';
+import moveCalculator from '../modules/moveCalculator.js';
 
 class Game {
   #board;
@@ -84,7 +84,7 @@ class Game {
     }
 
     const move = this.currentPlayer.isCpu
-      ? artificialIntelligence.comeUpWithMove(this.#board, this.currentPlayer.marker)
+      ? moveCalculator.comeUpWithMove(this.#board, this.currentPlayer.marker)
       : { x, y, marker: this.currentPlayer.marker };
 
     const next = {};

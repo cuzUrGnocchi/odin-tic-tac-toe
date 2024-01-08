@@ -8,7 +8,7 @@ module.exports = {
     Game: './src/model/Game.js',
     Time: './src/model/Time.js',
 
-    artificialIntelligence: './src/modules/artificialIntelligence.js',
+    moveCalculator: './src/modules/moveCalculator.js',
 
     BoardView: './src/view/Board.js',
     SidebarView: './src/view/Sidebar.js',
