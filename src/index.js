@@ -44,7 +44,7 @@ function showGame() {
   }
 
   function executeCpuRoutine() {
-    if (game.currentPlayer.isCpu) {
+    if (game.currentPlayer !== null && game.currentPlayer.isCpu) {
       game = game.playTurn();
       boardView.update(game.board);
 
@@ -52,7 +52,7 @@ function showGame() {
         checkWinner();
 
         requestAnimationFrame(() => {
-          if (game.currentPlayer.isCpu) {
+          if (game.currentPlayer !== null && game.currentPlayer.isCpu) {
             executeCpuRoutine();
           } else {
             boardView.update(game.board);

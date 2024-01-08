@@ -6,21 +6,17 @@ function renderSidebar() {
   const sidebar = document.createElement('div');
   sidebar.classList.add('sidebar');
 
-  let children = {};
-
   const shiftToPreGame = (preGameMessage, buttonText, defeated, clickHandler) => {
-    if (children.timer) {
-      children.timer.stop();
+    if (sidebar.querySelector('timer')) {
+      sidebar.querySelector('timer').stop();
     }
 
-    for (let i = 0; i < Object.values(children).length; i += 1) {
-      Object.values(children)[i].remove();
-    }
+    sidebar.innerHTML = '';
 
     sidebar.classList.remove('in-game');
 
     const message = document.createElement('p');
-    message.classList.add('goal');
+    message.classList.add('pre-game-message');
     message.textContent = preGameMessage;
     sidebar.appendChild(message);
 
@@ -28,8 +24,6 @@ function renderSidebar() {
     startButton.classList.add('start-button');
     startButton.textContent = buttonText;
     sidebar.appendChild(startButton);
-
-    children = { message, startButton };
 
     startButton.addEventListener('click', () => clickHandler({
       currentState: defeated ? 'defeat' : 'preGame',
@@ -43,43 +37,45 @@ function renderSidebar() {
       return;
     }
 
-    for (let i = 0; i < Object.values(children).length; i += 1) {
-      Object.values(children)[i].remove();
-    }
+    sidebar.innerHTML = '';
 
     sidebar.classList.add('in-game');
 
-    const streakTitle = document.createElement('h2');
-    streakTitle.classList.add('streak-title');
-    streakTitle.textContent = 'Streak';
-    sidebar.appendChild(streakTitle);
-
-    const streak = document.createElement('p');
-    streak.classList.add('streak');
-    streak.textContent = '0/10';
-    sidebar.appendChild(streak);
+    const timerContainer = document.createElement('div');
+    timerContainer.classList.add('timer-container');
+    sidebar.appendChild(timerContainer);
 
     const timerTitle = document.createElement('h2');
     timerTitle.classList.add('timer-title');
     timerTitle.textContent = 'Time';
-    sidebar.appendChild(timerTitle);
-
-    const retireButton = document.createElement('button');
-    retireButton.classList.add('retire-button');
-    retireButton.textContent = 'Retire';
-    sidebar.appendChild(retireButton);
+    timerContainer.appendChild(timerTitle);
 
     const timer = renderCountdownTimer(new Time({ seconds: 35 }));
-    sidebar.appendChild(timer);
+    timerContainer.appendChild(timer);
 
     timer.start();
     timer.addEventListener('timeUp', () => {
       sidebar.dispatchEvent(new CustomEvent('timeUp'));
     });
 
-    children = {
-      streakTitle, streak, timerTitle, retireButton, timer,
-    };
+    const streakContainer = document.createElement('div');
+    streakContainer.classList.add('streak-container');
+    sidebar.appendChild(streakContainer);
+
+    const streakTitle = document.createElement('h2');
+    streakTitle.classList.add('streak-title');
+    streakTitle.textContent = 'Streak';
+    streakContainer.appendChild(streakTitle);
+
+    const streak = document.createElement('p');
+    streak.classList.add('streak');
+    streak.textContent = '0/10';
+    streakContainer.appendChild(streak);
+
+    const retireButton = document.createElement('button');
+    retireButton.classList.add('retire-button');
+    retireButton.textContent = 'Retire';
+    sidebar.appendChild(retireButton);
 
     retireButton.addEventListener('click', () => {
       clickHandler({ currentState: 'inGame' });
@@ -94,8 +90,8 @@ function renderSidebar() {
 
   return Object.assign(sidebar, {
     setTieStreak(count) {
-      if (!children.streak) return;
-      children.streak.textContent = count;
+      if (!sidebar.querySelector('.streak')) return;
+      sidebar.querySelector('.streak').textContent = `${count}/10`;
     },
 
     declareDefeat() {

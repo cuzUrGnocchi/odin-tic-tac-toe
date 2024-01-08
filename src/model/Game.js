@@ -31,7 +31,7 @@ class Game {
     this.#players = players;
     this.#scoreboard = scoreboard;
     this.#startingPlayer = startingPlayer;
-    this.#playerIndex = playerIndex;
+    this.#playerIndex = board.isFull ? null : playerIndex;
     this.#tieCount = tieCount;
   }
 
@@ -60,7 +60,7 @@ class Game {
   }
 
   get currentPlayer() {
-    return this.#players[this.#playerIndex];
+    return this.#playerIndex !== null ? this.#players[this.#playerIndex] : null;
   }
 
   get tieCount() {
