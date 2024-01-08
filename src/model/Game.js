@@ -1,5 +1,6 @@
 import Board from './Board.js';
-import moveCalculator from '../modules/moveCalculator.js';
+import moveCalculator
+ from '../modules/moveCalculator.js';
 
 class Game {
   #board;
@@ -84,7 +85,8 @@ class Game {
     }
 
     const move = this.currentPlayer.isCpu
-      ? moveCalculator.comeUpWithMove(this.#board, this.currentPlayer.marker)
+      ? moveCalculator
+      .comeUpWithMove(this.#board, this.currentPlayer.marker)
       : { x, y, marker: this.currentPlayer.marker };
 
     const next = {};
