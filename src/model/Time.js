@@ -83,7 +83,7 @@ class Time {
   }
 
   decrement(timeToSubtract = {}) {
-    return new Time({ milliseconds: this.amount - sumTime(timeToSubtract) });
+    return new Time({ milliseconds: this.#amount - sumTime(timeToSubtract) });
   }
 }
 

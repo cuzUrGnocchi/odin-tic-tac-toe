@@ -14,17 +14,19 @@ class Game {
 
   #tieCount;
 
-  constructor({
-    board = new Board(),
-    players = [
-      { name: 'Player', marker: 'X', isCpu: false },
-      { name: 'Cpu', marker: 'O', isCpu: true },
-    ],
-    scoreboard = [0, 0],
-    startingPlayer = 0,
-    playerIndex = 0,
-    tieCount = 0,
-  } = {}) {
+  constructor(state = {}) {
+    const {
+      board = new Board(),
+      players = [
+        { name: 'Player', marker: 'X', isCpu: false },
+        { name: 'Cpu', marker: 'O', isCpu: true },
+      ],
+      scoreboard = [0, 0],
+      startingPlayer = 0,
+      playerIndex = 0,
+      tieCount = 0,
+    } = state;
+
     this.#board = board;
     this.#players = players;
     this.#scoreboard = scoreboard;
@@ -35,6 +37,14 @@ class Game {
 
   get board() {
     return this.#board;
+  }
+
+  get winner() {
+    return this.#board.winner;
+  }
+
+  get boardIsFull() {
+    return this.#board.isFull;
   }
 
   get players() {
@@ -49,8 +59,16 @@ class Game {
     return this.#playerIndex;
   }
 
+  get currentPlayer() {
+    return this.#players[this.#playerIndex];
+  }
+
   get tieCount() {
     return this.#tieCount;
+  }
+
+  getTile(x, y) {
+    return this.#board.getTile(x, y);
   }
 
   getScore(player) {
@@ -61,54 +79,42 @@ class Game {
   }
 
   playTurn(x, y) {
-    if (this.#board.winner || this.#board.isFull) {
+    if (this.winner || this.boardIsFull) {
       return this;
     }
 
-    let move;
+    const move = this.currentPlayer.isCpu
+      ? artificialIntelligence.comeUpWithMove(this.#board, this.currentPlayer.marker)
+      : { x, y, marker: this.currentPlayer.marker };
 
-    if (!(this.#players[this.#playerIndex].isCpu)) {
-      move = { x, y, marker: this.#players[this.#playerIndex].marker };
-    } else {
-      move = artificialIntelligence.comeUpWithMove(
-        this.#board,
-        this.#players[this.#playerIndex].marker,
-      );
+    const next = {};
+
+    next.board = this.#board.setTile(move.x, move.y, move.marker);
+    next.scoreboard = this.#scoreboard;
+    next.tieCount = next.board.isFull && !next.board.winner ? this.#tieCount + 1 : this.#tieCount;
+    next.startingPlayer = this.#startingPlayer;
+    next.players = this.#players;
+
+    if (next.board.winner) {
+      next.scoreboard[this.#playerIndex] += 1;
     }
 
-    const nextState = {};
-    nextState.board = this.#board.setTile(move.x, move.y, move.marker);
-    nextState.scoreboard = this.#scoreboard;
-    nextState.tieCount = this.#tieCount;
-
-    if (nextState.board.winner) {
-      nextState.scoreboard[this.#playerIndex] += 1;
+    if (!next.board.winner || !next.board.isFull) {
+      next.playerIndex = this.#playerIndex === 0 ? 1 : 0;
     }
 
-    if (!this.#board.winner && !this.#board.isFull) {
-      nextState.playerIndex = this.#playerIndex === 0 ? 1 : 0;
-    }
-
-    if (nextState.board.isFull && !nextState.board.winner) {
-      nextState.tieCount += 1;
-    }
-
-    nextState.startingPlayer = this.#startingPlayer;
-    nextState.players = this.#players;
-
-    return new Game(nextState);
+    return new Game(next);
   }
 
   reset() {
-    const nextState = {};
-    nextState.board = new Board();
-    nextState.players = this.#players;
-    nextState.scoreboard = this.#scoreboard;
-    nextState.startingPlayer = this.#startingPlayer === 0 ? 1 : 0;
-    nextState.playerIndex = nextState.startingPlayer;
-    nextState.tieCount = this.#tieCount;
-
-    return new Game(nextState);
+    return new Game({
+      board: new Board(),
+      players: this.#players,
+      scoreboard: this.#scoreboard,
+      startingPlayer: this.#startingPlayer === 0 ? 1 : 0,
+      playerIndex: this.#startingPlayer === 0 ? 1 : 0,
+      tieCount: this.#tieCount,
+    });
   }
 }
 

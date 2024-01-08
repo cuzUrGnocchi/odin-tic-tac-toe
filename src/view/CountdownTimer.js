@@ -17,8 +17,8 @@ function renderCountdownTimer(initialTime) {
           this.stop();
           this.dispatchEvent(new CustomEvent('timeUp'));
         } else {
-          this.textContent = timeRemaining.getValue({ getSeconds: true }).seconds;
           timeRemaining = timeRemaining.decrement({ seconds: 1 });
+          this.textContent = timeRemaining.getValue({ getSeconds: true }).seconds;
         }
       }, 1000);
     },

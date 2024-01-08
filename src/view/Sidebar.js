@@ -6,39 +6,45 @@ function renderSidebar() {
   const sidebar = document.createElement('div');
   sidebar.classList.add('sidebar');
 
-  const removeChildren = () => {
-    while (sidebar.firstChild) {
-      sidebar.removeChild(sidebar.lastChild);
-    }
-  };
+  let children = {};
 
-  const retire = (clickHandler) => {
-    removeChildren();
+  const shiftToPreGame = (preGameMessage, buttonText, defeated, clickHandler) => {
+    if (children.timer) {
+      children.timer.stop();
+    }
+
+    for (let i = 0; i < Object.values(children).length; i += 1) {
+      Object.values(children)[i].remove();
+    }
 
     sidebar.classList.remove('in-game');
 
-    const goal = document.createElement('p');
-    goal.classList.add('goal');
-    goal.textContent = 'Force a tie 10 times in a row in under 35 seconds';
-    sidebar.appendChild(goal);
+    const message = document.createElement('p');
+    message.classList.add('goal');
+    message.textContent = preGameMessage;
+    sidebar.appendChild(message);
 
     const startButton = document.createElement('button');
     startButton.classList.add('start-button');
-    startButton.textContent = 'Start';
+    startButton.textContent = buttonText;
     sidebar.appendChild(startButton);
 
-    startButton.addEventListener('click', () => clickHandler({ timerRunning: false }));
+    children = { message, startButton };
 
-    sidebar.dispatchEvent(new CustomEvent('retireButtonClicked'));
+    startButton.addEventListener('click', () => clickHandler({
+      currentState: defeated ? 'defeat' : 'preGame',
+    }));
   };
 
-  const clickHandler = (details = {}) => {
-    removeChildren();
-
-    if (details.timerRunning) {
-      retire(clickHandler);
-
+  const clickHandler = (detail = {}) => {
+    if (detail.currentState === 'inGame') {
+      shiftToPreGame('Force a tie 10 times in a row in under 35 seconds', 'Start', false, clickHandler);
+      sidebar.dispatchEvent(new CustomEvent('retireButtonClicked'));
       return;
+    }
+
+    for (let i = 0; i < Object.values(children).length; i += 1) {
+      Object.values(children)[i].remove();
     }
 
     sidebar.classList.add('in-game');
@@ -55,7 +61,7 @@ function renderSidebar() {
 
     const timerTitle = document.createElement('h2');
     timerTitle.classList.add('timer-title');
-    timerTitle.textContent = 'Time remaining';
+    timerTitle.textContent = 'Time';
     sidebar.appendChild(timerTitle);
 
     const retireButton = document.createElement('button');
@@ -66,16 +72,36 @@ function renderSidebar() {
     const timer = renderCountdownTimer(new Time({ seconds: 35 }));
     sidebar.appendChild(timer);
 
-    retireButton.addEventListener('click', () => {
-      clickHandler({ timerRunning: true });
+    timer.start();
+    timer.addEventListener('timeUp', () => {
+      sidebar.dispatchEvent(new CustomEvent('timeUp'));
     });
 
-    sidebar.dispatchEvent(new CustomEvent('startButtonClicked'));
+    children = {
+      streakTitle, streak, timerTitle, retireButton, timer,
+    };
+
+    retireButton.addEventListener('click', () => {
+      clickHandler({ currentState: 'inGame' });
+    });
+
+    sidebar.dispatchEvent(new CustomEvent('startButtonClicked', {
+      detail: { reset: detail.currentState === 'defeat' },
+    }));
   };
 
-  retire(clickHandler);
+  shiftToPreGame('Force a tie 10 times in a row in under 35 seconds', 'Start', false, clickHandler);
 
-  return sidebar;
+  return Object.assign(sidebar, {
+    setTieStreak(count) {
+      if (!children.streak) return;
+      children.streak.textContent = count;
+    },
+
+    declareDefeat() {
+      shiftToPreGame('Defeat', 'Try again', true, clickHandler);
+    },
+  });
 }
 
 export default renderSidebar;
