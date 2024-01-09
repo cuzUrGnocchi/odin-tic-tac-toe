@@ -7,8 +7,8 @@ function renderSidebar() {
   sidebar.classList.add('sidebar');
 
   const shiftToPreGame = (preGameMessage, buttonText, defeated, clickHandler) => {
-    if (sidebar.querySelector('timer')) {
-      sidebar.querySelector('timer').stop();
+    if (sidebar.querySelector('.timer')) {
+      sidebar.querySelector('.timer').stop();
     }
 
     sidebar.innerHTML = '';
