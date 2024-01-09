@@ -18,15 +18,15 @@ module.exports = {
   },
   devtool: 'inline-source-map',
   devServer: {
-    devMiddleware: {
-      index: true,
-      mimeTypes: {
-        phtml: 'text/html',
-      },
-      publicPath: '/dist',
-      serverSideRender: true,
-      writeToDisk: true,
-    },
+    // devMiddleware: {
+    //   index: true,
+    //   mimeTypes: {
+    //     phtml: 'text/html',
+    //   },
+    //   publicPath: '/dist',
+    //   serverSideRender: true,
+    //   writeToDisk: true,
+    // },
     static: './dist',
   },
   plugins: [
@@ -38,7 +38,7 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
-    publicPath: './',
+    // publicPath: './',
   },
   module: {
     rules: [
